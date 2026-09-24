@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>XAU/USD — SMC Signal Desk</title>
+<title>XAU/USD — SMC Signal Desk Pro</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥇</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,7 +21,7 @@
     --bull:#2fb374;
     --bear:#e0526b;
     --warn:#e0a640;
-    --radius:10px;
+    --radius:12px;
     font-size:16px;
   }
   *{box-sizing:border-box;}
@@ -39,87 +39,96 @@
 
   header{
     position:sticky;top:0;z-index:20;
-    padding:calc(14px + env(safe-area-inset-top,0px)) 18px 14px;
-    background:linear-gradient(180deg,#0c0e12 80%,rgba(12,14,18,0));
+    padding:calc(16px + env(safe-area-inset-top,0px)) 20px 16px;
+    background:linear-gradient(180deg,#0c0e12 85%,rgba(12,14,18,0));
     border-bottom:1px solid var(--line);
-    display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+    display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;
   }
-  .brand{display:flex;align-items:center;gap:10px;}
+  .brand{display:flex;align-items:center;gap:12px;}
   .brand .mark{
-    width:34px;height:34px;border-radius:8px;
+    width:38px;height:38px;border-radius:10px;
     background:linear-gradient(135deg,var(--gold),#8a6d10);
     display:flex;align-items:center;justify-content:center;
-    font-weight:700;color:#0c0e12;font-family:'IBM Plex Mono',monospace;font-size:14px;
+    font-weight:700;color:#0c0e12;font-family:'IBM Plex Mono',monospace;font-size:15px;
+    box-shadow:0 4px 12px rgba(201,162,39,.25);
   }
-  .brand h1{font-size:16px;margin:0;font-weight:600;letter-spacing:.2px;}
-  .brand span{color:var(--muted);font-size:12px;}
+  .brand h1{font-size:17px;margin:0;font-weight:600;letter-spacing:.2px;}
+  .brand span{color:var(--muted);font-size:12px;display:block;margin-top:1px;}
 
-  .price-block{display:flex;align-items:baseline;gap:10px;}
-  .price-block .px{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;}
-  .price-block .chg{font-family:'IBM Plex Mono',monospace;font-size:13px;padding:2px 7px;border-radius:6px;}
-  .chg.up{color:var(--bull);background:rgba(47,179,116,.12);}
-  .chg.down{color:var(--bear);background:rgba(224,82,107,.12);}
-  .price-block .src{font-size:11px;color:var(--muted);}
+  .price-block{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .price-main{text-align:right;}
+  .price-block .px{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;letter-spacing:-.5px;}
+  .price-block .chg{font-family:'IBM Plex Mono',monospace;font-size:13px;padding:3px 9px;border-radius:6px;font-weight:500;}
+  .chg.up{color:var(--bull);background:rgba(47,179,116,.14);}
+  .chg.down{color:var(--bear);background:rgba(224,82,107,.14);}
+  .price-block .src{font-size:11px;color:var(--muted);margin-top:2px;}
+  .live-dot{width:8px;height:8px;border-radius:50%;background:var(--bull);display:inline-block;margin-right:5px;box-shadow:0 0 0 3px rgba(47,179,116,.2);}
 
-  main{max-width:1180px;margin:0 auto;padding:18px 18px 60px;display:grid;gap:16px;}
+  main{max-width:1200px;margin:0 auto;padding:20px 18px 70px;display:grid;gap:18px;}
 
-  .row{display:grid;gap:16px;}
-  @media(min-width:920px){ .row.split{grid-template-columns:1.5fr 1fr;} }
+  .row{display:grid;gap:18px;}
+  @media(min-width:960px){ .row.split{grid-template-columns:1.55fr 1fr;} }
 
   .card{
     background:var(--panel);
     border:1px solid var(--line);
     border-radius:var(--radius);
-    padding:16px;
+    padding:18px;
   }
-  .card h2{margin:0 0 12px;font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.3px;
-    display:flex;align-items:center;justify-content:space-between;}
-  .card h2 small{color:var(--muted);font-weight:400;font-size:11px;}
+  .card h2{margin:0 0 14px;font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.4px;
+    display:flex;align-items:center;justify-content:space-between;text-transform:uppercase;}
+  .card h2 small{color:var(--muted);font-weight:400;font-size:11px;text-transform:none;letter-spacing:0;}
 
-  .tf-tabs{display:flex;gap:6px;background:var(--panel-2);padding:4px;border-radius:8px;}
+  .tf-tabs{display:flex;gap:6px;background:var(--panel-2);padding:4px;border-radius:9px;}
   .tf-tabs button{
-    flex:1;padding:7px 10px;border:none;background:transparent;color:var(--muted);
-    font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;
+    flex:1;padding:8px 12px;border:none;background:transparent;color:var(--muted);
+    font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;border-radius:7px;cursor:pointer;
+    transition:all .15s;
   }
   .tf-tabs button.active{background:var(--gold);color:#161708;}
+  .tf-tabs button:hover:not(.active){color:var(--text);}
 
-  #chart{width:100%;height:360px;border-radius:8px;overflow:hidden;}
-  .chart-legend{display:flex;gap:14px;font-size:11px;color:var(--muted);margin-top:8px;flex-wrap:wrap;}
+  #chart{width:100%;height:380px;border-radius:9px;overflow:hidden;}
+  .chart-legend{display:flex;gap:16px;font-size:11px;color:var(--muted);margin-top:10px;flex-wrap:wrap;}
   .chart-legend .dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;}
 
   .btnrow{display:flex;gap:8px;flex-wrap:wrap;}
   button.btn{
     background:var(--panel-2);color:var(--text);border:1px solid var(--line);
-    padding:8px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;
+    padding:9px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;
+    transition:all .15s;
   }
-  button.btn:hover{border-color:var(--gold);}
+  button.btn:hover{border-color:var(--gold);color:var(--gold-soft);}
   button.btn.primary{background:var(--gold);color:#161708;border-color:var(--gold);font-weight:600;}
-  button.btn:disabled{opacity:.5;cursor:default;}
+  button.btn.primary:hover{filter:brightness(1.08);}
+  button.btn:disabled{opacity:.45;cursor:default;}
 
-  .trade-status{
-    display:flex;flex-direction:column;gap:10px;
-  }
+  .trade-status{display:flex;flex-direction:column;gap:12px;}
   .badge{
-    display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;
+    display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;
     font-size:11px;font-weight:600;letter-spacing:.3px;width:fit-content;
   }
   .badge.scan{background:rgba(136,145,163,.15);color:var(--muted);}
-  .badge.pending{background:rgba(224,166,64,.15);color:var(--warn);}
-  .badge.active{background:rgba(47,179,116,.15);color:var(--bull);}
-  .badge.be{background:rgba(201,162,39,.18);color:var(--gold-soft);}
+  .badge.pending{background:rgba(224,166,64,.16);color:var(--warn);}
+  .badge.active{background:rgba(47,179,116,.16);color:var(--bull);}
+  .badge.be{background:rgba(201,162,39,.2);color:var(--gold-soft);}
 
   .trade-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:4px;}
-  .trade-grid .cell{background:var(--panel-2);border-radius:8px;padding:10px 12px;}
+  .trade-grid .cell{background:var(--panel-2);border-radius:9px;padding:11px 13px;}
   .trade-grid .cell .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
-  .trade-grid .cell .val{font-family:'IBM Plex Mono',monospace;font-size:15px;margin-top:3px;}
+  .trade-grid .cell .val{font-family:'IBM Plex Mono',monospace;font-size:15px;margin-top:4px;font-weight:500;}
   .trade-grid .cell.buy .val{color:var(--bull);}
   .trade-grid .cell.sell .val{color:var(--bear);}
 
-  .empty-note{color:var(--muted);font-size:13px;line-height:1.5;}
+  .rr-bar{height:6px;background:var(--panel-2);border-radius:4px;overflow:hidden;margin-top:6px;}
+  .rr-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--bull));border-radius:4px;transition:width .3s;}
+
+  .empty-note{color:var(--muted);font-size:13px;line-height:1.55;}
 
   .zone{
     display:flex;align-items:center;justify-content:space-between;gap:10px;
-    padding:10px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;
+    padding:11px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px;
+    transition:opacity .2s;
   }
   .zone .z-main{display:flex;flex-direction:column;gap:2px;}
   .zone .z-tag{font-size:10px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;}
@@ -128,34 +137,34 @@
   .zone .z-price{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text);}
   .zone .z-score{
     font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;
-    padding:4px 9px;border-radius:6px;background:var(--panel-2);
+    padding:4px 10px;border-radius:6px;background:var(--panel-2);
   }
-  .zone.invalid{opacity:.55;}
+  .zone.invalid{opacity:.5;}
   .zone.invalid .z-price{text-decoration:line-through;}
   .zone.invalid .z-score{color:var(--bear);background:rgba(224,82,107,.12);}
 
   table{width:100%;border-collapse:collapse;font-size:12px;}
-  th{text-align:left;color:var(--muted);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--line);font-size:11px;}
-  td{padding:7px 8px;border-bottom:1px solid var(--line);font-family:'IBM Plex Mono',monospace;}
+  th{text-align:left;color:var(--muted);font-weight:500;padding:7px 8px;border-bottom:1px solid var(--line);font-size:11px;}
+  td{padding:8px 8px;border-bottom:1px solid var(--line);font-family:'IBM Plex Mono',monospace;}
   tr:last-child td{border-bottom:none;}
   .res-tp{color:var(--bull);font-weight:600;}
   .res-sl{color:var(--bear);font-weight:600;}
   .res-be{color:var(--gold-soft);font-weight:600;}
-  .table-wrap{max-height:260px;overflow:auto;}
+  .table-wrap{max-height:270px;overflow:auto;}
 
-  .stats{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:10px;}
+  .stats{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:12px;}
   .stats .s{font-size:12px;color:var(--muted);}
   .stats .s b{color:var(--text);font-family:'IBM Plex Mono',monospace;}
 
   details.settings summary{cursor:pointer;color:var(--muted);font-size:12px;list-style:none;}
   details.settings summary::-webkit-details-marker{display:none;}
-  details.settings .body{margin-top:10px;display:grid;gap:8px;}
+  details.settings .body{margin-top:12px;display:grid;gap:10px;}
   label.f{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);}
   input[type=text],input[type=number]{
     background:var(--panel-2);border:1px solid var(--line);color:var(--text);
-    padding:8px 10px;border-radius:7px;font-family:'IBM Plex Mono',monospace;font-size:12px;
+    padding:9px 11px;border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;
   }
-  .disclaimer{font-size:11px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:14px;margin-top:6px;}
+  .disclaimer{font-size:11px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:14px;margin-top:8px;}
 </style>
 </head>
 <body>
@@ -165,16 +174,16 @@
     <div class="mark">XAU</div>
     <div>
       <h1>SMC Signal Desk — Gold</h1>
-      <span>Order Block · Liquidity · BOS/CHOCH · RTO</span>
+      <span>SH+BMS+RTO · SMS+BMS+RTO · Order Block · Limit</span>
     </div>
   </div>
   <div class="price-block">
-    <div>
+    <div class="price-main">
       <div class="px mono" id="livePx">—</div>
-      <div class="src" id="pxSrc">GoldAPI · pas encore actualisé</div>
+      <div class="src"><span class="live-dot" id="liveDot" style="display:none"></span><span id="pxSrc">GoldAPI · pas encore actualisé</span></div>
     </div>
     <div class="chg mono" id="livePxChg"></div>
-    <button class="btn" id="refreshPxBtn">↻ Actualiser prix</button>
+    <button class="btn" id="refreshPxBtn">↻ Actualiser</button>
   </div>
 </header>
 
@@ -184,19 +193,19 @@
     <!-- CHART -->
     <div class="card">
       <h2>
-        Graphique <small id="tfNote">Binance PAXG/USDT — proxy sur l'or (données M5/M15/M30 réelles)</small>
+        Graphique <small id="tfNote">Binance PAXG/USDT — proxy or (M5/M15/M30)</small>
       </h2>
       <div class="tf-tabs" id="tfTabs">
         <button data-tf="30m" class="active">M30</button>
         <button data-tf="15m">M15</button>
         <button data-tf="5m">M5</button>
       </div>
-      <div style="height:10px"></div>
+      <div style="height:12px"></div>
       <div id="chart"></div>
       <div class="chart-legend">
         <span><span class="dot" style="background:var(--gold)"></span>Order Block</span>
         <span><span class="dot" style="background:#5b8def"></span>Liquidité (BSL/SSL)</span>
-        <span><span class="dot" style="background:var(--bear)"></span>BMS / structure</span>
+        <span><span class="dot" style="background:var(--bear)"></span>BMS / Structure</span>
       </div>
     </div>
 
@@ -210,12 +219,11 @@
   <div class="row split">
     <!-- ZONES -->
     <div class="card">
-      <h2>Zones clés actives <small>confluence en %</small></h2>
+      <h2>Zones clés actives <small>confluence %</small></h2>
       <div id="zonesActive"><p class="empty-note">Aucune zone détectée pour l'instant.</p></div>
-      <details class="settings" id="invalidWrap" style="margin-top:8px;">
-        <summary>Zones invalidées</summary>
+      **Summary:**
+Zones invalidées
         <div class="body" id="zonesInvalid"></div>
-      </details>
     </div>
 
     <!-- HISTORY -->
@@ -228,36 +236,43 @@
           <tbody id="histBody"><tr><td colspan="6" class="empty-note">Aucun trade clôturé.</td></tr></tbody>
         </table>
       </div>
-      <div class="btnrow" style="margin-top:10px;">
+      <div class="btnrow" style="margin-top:12px;">
         <button class="btn" id="exportBtn">Exporter (.json)</button>
-        <button class="btn" id="resetBtn">Réinitialiser l'historique</button>
+        <button class="btn" id="resetBtn">Réinitialiser</button>
       </div>
     </div>
   </div>
 
   <div class="card">
-    <details class="settings">
-      <summary>⚙ Réglages (clé GoldAPI, gestion du risque)</summary>
+    **Summary:**
+⚙ Réglages (clé GoldAPI + points TP/SL)
       <div class="body">
-        <label class="f">Clé GoldAPI (x-access-token) — utilisée uniquement pour le prix affiché en haut
+        <label class="f">Clé GoldAPI (x-access-token)
           <input type="text" id="goldApiKey" placeholder="goldapi-xxxxxxxxxxxxxxxx-io">
         </label>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <label class="f">Mise à BE quand RR ≥
-            <input type="number" id="beTrigger" value="2" step="0.1" style="width:90px">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <label class="f">SL max (points)
+            <input type="number" id="slMax" value="10" step="1" style="width:90px">
           </label>
-          <label class="f">TP final (RR)
-            <input type="number" id="tpTrigger" value="3" step="0.1" style="width:90px">
+          <label class="f">TP1 (points)
+            <input type="number" id="tp1" value="10" step="1" style="width:90px">
           </label>
-          <label class="f">Actualisation auto (min, 0 = off)
+          <label class="f">TP2 (points)
+            <input type="number" id="tp2" value="20" step="1" style="width:90px">
+          </label>
+          <label class="f">TP3 (points)
+            <input type="number" id="tp3" value="30" step="1" style="width:90px">
+          </label>
+          <label class="f">Auto refresh (min)
             <input type="number" id="autoMin" value="0" step="1" style="width:90px">
           </label>
         </div>
         <button class="btn primary" id="saveSettings" style="width:fit-content;">Enregistrer</button>
       </div>
-    </details>
     <p class="disclaimer">
-      Cet outil détecte des structures Smart Money (BMS, order blocks, liquidité, RTO) à partir de données de marché publiques et applique des règles automatiques. Ce n'est pas un conseil financier — vérifiez toujours vous-même avant d'ouvrir une position réelle. Les prix M5/M15/M30 utilisés pour l'analyse de structure proviennent de PAXG/USDT (Binance), un actif adossé à l'or physique qui suit de très près le cours du XAU/USD ; le prix affiché en haut de page (spot) provient de GoldAPI.io.
+      Outil basé sur Smart Money Concepts (SH+BMS+RTO, SMS+BMS+RTO, Order Blocks). 
+      Données structure : PAXG/USDT Binance. Prix spot : GoldAPI.io. 
+      Ce n’est pas un conseil financier. Vérifiez toujours avant d’ouvrir une position réelle.
     </p>
   </div>
 
@@ -265,25 +280,27 @@
 
 <script>
 /* =========================================================================
-   SMC GOLD SIGNAL DESK
-   - Candles: Binance PAXG/USDT public klines (no key needed, real OHLC,
-     tracks physical gold very closely) -> used for ALL structure analysis
-     (BMS/CHOCH, order blocks, liquidity, FVG) on M30 / M15 / M5.
-   - Spot price header: GoldAPI.io XAU/USD (needs the user's key, manual
-     refresh only to respect the free-plan quota).
-   - Trade engine: one active trade at a time across all timeframes, limit
-     entry at the order-block zone, SL beyond the zone, moves to breakeven
-     at RR >= beTrigger, closes at RR >= tpTrigger. History kept in
-     localStorage.
+   SMC GOLD SIGNAL DESK PRO
+   Stratégie : SH+BMS+RTO + SMS+BMS+RTO (Wade FX style)
+   Entry    : Limit order sur Order Block
+   SL       : max 10 points
+   TP       : 10 / 20 / 30 points (partial)
    ========================================================================= */
 
 const LS_KEYS = {
-  settings: 'smc_settings_v1',
-  trade: 'smc_active_trade_v1',
-  history: 'smc_history_v1',
+  settings: 'smc_pro_settings_v2',
+  trade: 'smc_pro_active_trade_v2',
+  history: 'smc_pro_history_v2',
 };
 
-const DEFAULT_SETTINGS = { goldApiKey:'', beTrigger:2, tpTrigger:3, autoMin:0 };
+const DEFAULT_SETTINGS = {
+  goldApiKey: '',
+  slMax: 10,
+  tp1: 10,
+  tp2: 20,
+  tp3: 30,
+  autoMin: 0
+};
 
 function loadJSON(key, fallback){
   try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
@@ -295,7 +312,6 @@ let settings = { ...DEFAULT_SETTINGS, ...loadJSON(LS_KEYS.settings, {}) };
 let activeTrade = loadJSON(LS_KEYS.trade, null);
 let history = loadJSON(LS_KEYS.history, []);
 
-// ---- candle cache per timeframe --------------------------------------
 const TIMEFRAMES = ['30m','15m','5m'];
 let candleCache = { '30m':[], '15m':[], '5m':[] };
 let analysisCache = { '30m':null, '15m':null, '5m':null };
@@ -318,12 +334,12 @@ new ResizeObserver(()=>{ chart.applyOptions({width:chartEl.clientWidth, height:c
   .observe(chartEl);
 
 // ==========================================================================
-// 1. DATA FETCHING
+// 1. DATA
 // ==========================================================================
 async function fetchCandles(tf, limit=250){
-  const url = `https://api.binance.com/api/v3/klines?symbol=PAXGUSDT&interval=${tf}&limit=${limit}`;
+  const url = `https://api.binance.com/api/v3/klines?symbol=PAXGUSDT&interval=\( {tf}&limit= \){limit}`;
   const res = await fetch(url);
-  if(!res.ok) throw new Error('Binance API error '+res.status);
+  if(!res.ok) throw new Error('Binance '+res.status);
   const raw = await res.json();
   return raw.map(k => ({
     time: Math.floor(k[0]/1000),
@@ -334,7 +350,8 @@ async function fetchCandles(tf, limit=250){
 async function fetchSpotPrice(){
   const key = settings.goldApiKey.trim();
   const src = document.getElementById('pxSrc');
-  if(!key){ src.textContent = 'GoldAPI · ajoutez votre clé dans Réglages'; return; }
+  const dot = document.getElementById('liveDot');
+  if(!key){ src.textContent = 'GoldAPI · ajoutez votre clé dans Réglages'; dot.style.display='none'; return; }
   src.textContent = 'GoldAPI · actualisation…';
   try{
     const res = await fetch('https://www.goldapi.io/api/XAU/USD', { headers:{ 'x-access-token': key } });
@@ -347,16 +364,16 @@ async function fetchSpotPrice(){
       chg.className = 'chg mono '+(d.chp>=0?'up':'down');
     }
     src.textContent = 'GoldAPI · '+new Date().toLocaleTimeString();
+    dot.style.display = 'inline-block';
   }catch(e){
     src.textContent = 'GoldAPI · échec ('+e.message+')';
+    dot.style.display='none';
   }
 }
 
 // ==========================================================================
-// 2. SMC ANALYSIS ENGINE
+// 2. SMC ENGINE (Wade FX style)
 // ==========================================================================
-
-// -- 2.1 swing highs/lows (fractal, 2 candles each side) ------------------
 function findSwings(candles, left=2, right=2){
   const swings = [];
   for(let i=left;i<candles.length-right;i++){
@@ -373,9 +390,8 @@ function findSwings(candles, left=2, right=2){
   return swings;
 }
 
-// -- 2.2 market structure: BMS (break of structure) & SMS (failure swing) -
 function analyzeStructure(candles, swings){
-  const events = []; // {i, time, kind:'BMS'|'SMS', dir:'up'|'down', level}
+  const events = [];
   const highs = swings.filter(s=>s.type==='high');
   const lows  = swings.filter(s=>s.type==='low');
   if(highs.length<2 || lows.length<2) return { events, trend:'range' };
@@ -392,39 +408,30 @@ function analyzeStructure(candles, swings){
         }
         trend='up';
         lastHigh = s;
-      } else if(trend==='up' && s.price < lastHigh.price){
-        // potential failure swing (SMS) if it then breaks below lastLow
       }
     } else {
       if(s.price < lastLow.price){
         if(trend==='up'){
           events.push({i:s.i, time:s.time, kind:'BMS', dir:'down', level:lastLow.price});
-        } else if(trend==='range'){
-          // ignore first
         }
         trend='down';
         lastLow = s;
       }
-      if(trend==='up' && s.price > lastLow.price && s.i > lastHigh.i){
-        // higher low forming inside uptrend -> check failure swing next high
-      }
     }
   }
 
-  // Failure swing (SMS): a swing that fails to exceed previous swing high/low
-  // in the direction of the trend, followed by a break the other way.
+  // SMS (Failure Swing)
   for(let k=1;k<all.length;k++){
     const prev = all[k-1], cur = all[k];
     if(prev.type==='high' && cur.type==='high' && cur.price < prev.price){
-      // failed to make new high -> if price later closes below prior swing low, SMS bearish
       const nextLow = lows.find(l=>l.i>cur.i);
-      if(nextLow && nextLow.price < (lows.filter(l=>l.i<cur.i).slice(-1)[0]?.price ?? Infinity)){
+      if(nextLow){
         events.push({i:nextLow.i, time:nextLow.time, kind:'SMS', dir:'down', level:prev.price});
       }
     }
     if(prev.type==='low' && cur.type==='low' && cur.price > prev.price){
       const nextHigh = highs.find(h=>h.i>cur.i);
-      if(nextHigh && nextHigh.price > (highs.filter(h=>h.i<cur.i).slice(-1)[0]?.price ?? -Infinity)){
+      if(nextHigh){
         events.push({i:nextHigh.i, time:nextHigh.time, kind:'SMS', dir:'up', level:prev.price});
       }
     }
@@ -434,18 +441,18 @@ function analyzeStructure(candles, swings){
   return { events, trend };
 }
 
-// -- 2.3 order blocks: last opposite candle before the impulse that BMS'd -
 function findOrderBlocks(candles, events){
   const obs = [];
   for(const ev of events){
-    if(ev.kind!=='BMS') continue;
+    if(ev.kind!=='BMS' && ev.kind!=='SMS') continue;
     let obIdx = -1;
     if(ev.dir==='up'){
-      for(let j=ev.i-1;j>=Math.max(0,ev.i-12);j--){
+      // dernière bougie baissière avant le BMS
+      for(let j=ev.i-1;j>=Math.max(0,ev.i-15);j--){
         if(candles[j].close < candles[j].open){ obIdx=j; break; }
       }
     } else {
-      for(let j=ev.i-1;j>=Math.max(0,ev.i-12);j--){
+      for(let j=ev.i-1;j>=Math.max(0,ev.i-15);j--){
         if(candles[j].close > candles[j].open){ obIdx=j; break; }
       }
     }
@@ -456,12 +463,12 @@ function findOrderBlocks(candles, events){
       top: Math.max(c.open,c.close,c.high),
       bottom: Math.min(c.open,c.close,c.low),
       time: c.time, i: obIdx, bmsIndex: ev.i,
+      source: ev.kind // BMS or SMS
     });
   }
   return obs;
 }
 
-// -- 2.4 liquidity pools: equal highs/lows clusters ------------------------
 function findLiquidity(swings, tolPct=0.0008){
   const pools = [];
   const highs = swings.filter(s=>s.type==='high').sort((a,b)=>a.i-b.i);
@@ -486,23 +493,11 @@ function findLiquidity(swings, tolPct=0.0008){
   return pools;
 }
 
-// -- 2.5 fair value gap (3-candle imbalance) -------------------------------
-function findFVG(candles){
-  const gaps=[];
-  for(let i=1;i<candles.length-1;i++){
-    const a=candles[i-1], c=candles[i+1];
-    if(a.high < c.low) gaps.push({dir:'bull', top:c.low, bottom:a.high, i, time:candles[i].time});
-    if(a.low  > c.high) gaps.push({dir:'bear', top:a.low, bottom:c.high, i, time:candles[i].time});
-  }
-  return gaps.slice(-25);
-}
-
-// -- 2.6 stop hunt / liquidity sweep ---------------------------------------
 function findSweeps(candles, pools){
   const sweeps=[];
   const lastIdx = candles.length-1;
   for(const p of pools){
-    if(p.i >= lastIdx-1) continue; // need candles after the pool
+    if(p.i >= lastIdx-1) continue;
     for(let j=p.i+1;j<candles.length;j++){
       const c = candles[j];
       if(p.kind==='BSL' && c.high>p.price && c.close<p.price){
@@ -516,17 +511,14 @@ function findSweeps(candles, pools){
   return sweeps;
 }
 
-// -- 2.7 full analysis for one timeframe -----------------------------------
 function analyzeTF(candles){
-  if(candles.length < 30) return null;
+  if(candles.length < 40) return null;
   const swings = findSwings(candles);
   const structure = analyzeStructure(candles, swings);
   const obs = findOrderBlocks(candles, structure.events);
   const liquidity = findLiquidity(swings);
-  const fvgs = findFVG(candles);
   const sweeps = findSweeps(candles, liquidity);
 
-  // mark invalidated order blocks: price closed fully through the zone
   const last = candles.length-1;
   for(const ob of obs){
     ob.invalid = false;
@@ -536,7 +528,6 @@ function analyzeTF(candles){
       if(ob.dir==='bear' && c.close > ob.top){ ob.invalid = true; break; }
     }
   }
-  // mark invalidated liquidity pools: price closed through without reacting (swept + continued)
   for(const p of liquidity){
     p.invalid = false;
     for(let j=p.i+1;j<=last;j++){
@@ -546,52 +537,67 @@ function analyzeTF(candles){
     }
   }
 
-  // confluence score per order block (0-100)
+  // Confluence score (Wade style)
   for(const ob of obs){
-    let score = 40; // base: it's a confirmed OB from a real BMS
-    const hasFVGoverlap = fvgs.some(f => f.dir===ob.dir && !(f.top<ob.bottom || f.bottom>ob.top));
-    if(hasFVGoverlap) score += 20;
-    const hasSweepBefore = sweeps.some(s => Math.abs(s.i-ob.i) < 15 && ((ob.dir==='bull'&&s.dir==='up')||(ob.dir==='bear'&&s.dir==='down')));
-    if(hasSweepBefore) score += 20;
-    const nearbyLiquidity = liquidity.some(p => Math.abs(p.price-((ob.top+ob.bottom)/2))/ob.top < 0.01);
-    if(nearbyLiquidity) score += 10;
-    if(structure.trend===('bull'===ob.dir?'up':'down')) score += 10;
+    let score = 45; // base OB from BMS/SMS
+    if(ob.source === 'SMS') score += 10;
+
+    const hasSweep = sweeps.some(s => Math.abs(s.i - ob.i) < 20 &&
+      ((ob.dir==='bull'&&s.dir==='up')||(ob.dir==='bear'&&s.dir==='down')));
+    if(hasSweep) score += 25; // SH+BMS+RTO
+
+    const nearbyLiq = liquidity.some(p => Math.abs(p.price-((ob.top+ob.bottom)/2))/ob.top < 0.008);
+    if(nearbyLiq) score += 10;
+
+    if(structure.trend === (ob.dir==='bull'?'up':'down')) score += 10;
+
     ob.score = Math.min(100, score);
   }
 
-  return { candles, swings, structure, obs, liquidity, fvgs, sweeps, last };
+  return { candles, swings, structure, obs, liquidity, sweeps, last };
 }
 
-// -- 2.8 signal generation: RTO / SH+BMS+RTO / SMS+BMS+RTO ------------------
+// Signal = RTO vers un OB de haute qualité (SH ou SMS confluence)
 function findSignal(analysis, tf){
   if(!analysis) return null;
   const { candles, obs, last } = analysis;
   const price = candles[last].close;
-  // most recent valid, unmitigated, high-confidence OB not yet reached
+
   const candidates = obs
-    .filter(ob => !ob.invalid && ob.score >= 60)
+    .filter(ob => !ob.invalid && ob.score >= 70)
     .sort((a,b)=> b.i - a.i);
+
   for(const ob of candidates){
-    const mid = (ob.top+ob.bottom)/2;
-    const dist = Math.abs(price-mid)/price;
-    if(dist > 0.02) continue; // too far to matter right now
-    const entry = ob.dir==='bull' ? ob.top : ob.bottom; // limit at the near edge
+    const mid = (ob.top + ob.bottom)/2;
+    const dist = Math.abs(price - mid)/price;
+    if(dist > 0.015) continue; // trop loin
+
+    // Limit entry at near edge of OB
+    const entry = ob.dir==='bull' ? ob.top : ob.bottom;
     const slBase = ob.dir==='bull' ? ob.bottom : ob.top;
-    const risk = Math.abs(entry-slBase);
-    if(risk<=0) continue;
-    const sl = ob.dir==='bull' ? slBase - risk*0.15 : slBase + risk*0.15;
-    const r = Math.abs(entry-sl);
-    const tp = ob.dir==='bull' ? entry + r*settings.tpTrigger : entry - r*settings.tpTrigger;
+    let risk = Math.abs(entry - slBase);
+
+    // SL max 10 points
+    if(risk > settings.slMax) risk = settings.slMax;
+    if(risk < 3) continue; // trop serré
+
+    const sl = ob.dir==='bull' ? entry - risk : entry + risk;
+    const tp1 = ob.dir==='bull' ? entry + settings.tp1 : entry - settings.tp1;
+    const tp2 = ob.dir==='bull' ? entry + settings.tp2 : entry - settings.tp2;
+    const tp3 = ob.dir==='bull' ? entry + settings.tp3 : entry - settings.tp3;
+
     return {
-      tf, dir: ob.dir==='bull'?'ACHAT':'VENTE', entry, sl, tp,
-      risk: r, score: ob.score, obTime: ob.time,
+      tf, dir: ob.dir==='bull'?'ACHAT':'VENTE',
+      entry, sl, tp1, tp2, tp3,
+      risk, score: ob.score, obTime: ob.time,
+      source: ob.source + (ob.score>=85?'+SH':'')
     };
   }
   return null;
 }
 
 // ==========================================================================
-// 3. TRADE STATE MACHINE (persisted, single trade across all TFs)
+// 3. TRADE STATE MACHINE (points based)
 // ==========================================================================
 function evaluateTrade(analysisByTf){
   const now = Date.now()/1000;
@@ -608,22 +614,45 @@ function evaluateTrade(analysisByTf){
         const filled = dirUp ? px<=activeTrade.entry : px>=activeTrade.entry;
         if(filled){ activeTrade.status='active'; activeTrade.filledAt=now; }
       }
+
       if(activeTrade.status==='active'){
-        const rrNow = dirUp
-          ? (px-activeTrade.entry)/activeTrade.risk
-          : (activeTrade.entry-px)/activeTrade.risk;
-        if(!activeTrade.beArmed && rrNow >= settings.beTrigger){
-          activeTrade.beArmed = true;
-          activeTrade.sl = activeTrade.entry; // move SL to breakeven
+        // Partial TP logic
+        if(!activeTrade.tp1Hit){
+          const hit1 = dirUp ? px>=activeTrade.tp1 : px<=activeTrade.tp1;
+          if(hit1){
+            activeTrade.tp1Hit = true;
+            activeTrade.sl = activeTrade.entry; // BE after TP1
+            activeTrade.beArmed = true;
+          }
         }
-        const hitTP = dirUp ? px>=activeTrade.tp : px<=activeTrade.tp;
-        const hitSL = dirUp ? px<=activeTrade.sl : px>=activeTrade.sl;
-        if(hitTP || hitSL){
-          const outcome = hitTP ? 'TP' : (activeTrade.beArmed ? 'BE' : 'SL');
-          const rrFinal = outcome==='TP' ? settings.tpTrigger : (outcome==='BE' ? 0 : -1);
+        if(activeTrade.tp1Hit && !activeTrade.tp2Hit){
+          const hit2 = dirUp ? px>=activeTrade.tp2 : px<=activeTrade.tp2;
+          if(hit2) activeTrade.tp2Hit = true;
+        }
+
+        const hitTP3 = dirUp ? px>=activeTrade.tp3 : px<=activeTrade.tp3;
+        const hitSL  = dirUp ? px<=activeTrade.sl  : px>=activeTrade.sl;
+
+        if(hitTP3 || hitSL){
+          let outcome = 'SL';
+          let rrFinal = -1;
+          if(hitTP3){
+            outcome = 'TP3';
+            rrFinal = settings.tp3 / activeTrade.risk;
+          } else if(activeTrade.tp2Hit){
+            outcome = 'TP2';
+            rrFinal = settings.tp2 / activeTrade.risk;
+          } else if(activeTrade.tp1Hit){
+            outcome = 'TP1';
+            rrFinal = settings.tp1 / activeTrade.risk;
+          } else if(activeTrade.beArmed){
+            outcome = 'BE';
+            rrFinal = 0;
+          }
+
           history.unshift({
             date:new Date().toISOString(), tf:activeTrade.tf, dir:activeTrade.dir,
-            entry:activeTrade.entry, result:outcome, rr:rrFinal,
+            entry:activeTrade.entry, result:outcome, rr:+rrFinal.toFixed(2),
           });
           history = history.slice(0,100);
           saveJSON(LS_KEYS.history, history);
@@ -637,7 +666,14 @@ function evaluateTrade(analysisByTf){
     for(const tf of TIMEFRAMES){
       const sig = findSignal(analysisByTf[tf], tf);
       if(sig){
-        activeTrade = { ...sig, status:'pending', beArmed:false, openedAt:now };
+        activeTrade = {
+          ...sig,
+          status:'pending',
+          beArmed:false,
+          tp1Hit:false,
+          tp2Hit:false,
+          openedAt:now
+        };
         break;
       }
     }
@@ -648,7 +684,7 @@ function evaluateTrade(analysisByTf){
 }
 
 // ==========================================================================
-// 4. RENDERING
+// 4. RENDER
 // ==========================================================================
 function renderChart(analysis){
   if(!analysis) return;
@@ -666,14 +702,13 @@ function renderChart(analysis){
   }
   candleSeries.setMarkers(markers);
 
-  // clear previous price lines
   (candleSeries._smcLines||[]).forEach(l=>candleSeries.removePriceLine(l));
   candleSeries._smcLines = [];
-  const activeObs = analysis.obs.filter(o=>!o.invalid).slice(-4);
+  const activeObs = analysis.obs.filter(o=>!o.invalid).slice(-5);
   for(const ob of activeObs){
     const line = candleSeries.createPriceLine({
       price:(ob.top+ob.bottom)/2,
-      color: ob.dir==='bull' ? '#c9a227' : '#c9a227',
+      color: '#c9a227',
       lineWidth:1, lineStyle:2, axisLabelVisible:true,
       title: (ob.dir==='bull'?'OB↑':'OB↓')+' '+ob.score+'%',
     });
@@ -686,24 +721,37 @@ function fmt(n){ return n==null ? '—' : Number(n).toFixed(2); }
 function renderTrade(){
   const body = document.getElementById('tradeBody');
   document.getElementById('tradeTf').textContent = activeTrade ? '· '+activeTrade.tf.toUpperCase() : '';
+
   if(!activeTrade){
     body.innerHTML = `<span class="badge scan">🔍 Recherche de setup</span>
-      <p class="empty-note">Aucune position en attente. Le moteur scanne M30 → M15 → M5 (RTO, SH+BMS+RTO, SMS+BMS+RTO) et ne proposera un nouvel ordre limite que si aucun trade n'est déjà ouvert.</p>`;
+      <p class="empty-note">Aucune position. Le moteur scanne M30 → M15 → M5 (SH+BMS+RTO / SMS+BMS+RTO) et place un ordre limite uniquement si score ≥ 70.</p>`;
     return;
   }
-  const badge = activeTrade.status==='pending'
-    ? '<span class="badge pending">⏳ Ordre limite en attente</span>'
-    : (activeTrade.beArmed ? '<span class="badge be">🟡 BE armé</span>' : '<span class="badge active">🟢 Position active</span>');
+
+  let badge = '';
+  if(activeTrade.status==='pending'){
+    badge = '<span class="badge pending">⏳ Ordre limite en attente</span>';
+  } else if(activeTrade.beArmed){
+    badge = '<span class="badge be">🟡 BE armé (après TP1)</span>';
+  } else {
+    badge = '<span class="badge active">🟢 Position active</span>';
+  }
+
+  const progress = activeTrade.tp2Hit ? 100 : (activeTrade.tp1Hit ? 66 : (activeTrade.status==='active' ? 25 : 5));
+
   body.innerHTML = `
     ${badge}
     <div class="trade-grid">
-      <div class="cell ${activeTrade.dir==='ACHAT'?'buy':'sell'}"><div class="lbl">Sens</div><div class="val">${activeTrade.dir}</div></div>
-      <div class="cell"><div class="lbl">Score zone</div><div class="val">${activeTrade.score}%</div></div>
+      <div class="cell \( {activeTrade.dir==='ACHAT'?'buy':'sell'}"><div class="lbl">Sens</div><div class="val"> \){activeTrade.dir}</div></div>
+      <div class="cell"><div class="lbl">Score / Source</div><div class="val">${activeTrade.score}% · ${activeTrade.source||'OB'}</div></div>
       <div class="cell"><div class="lbl">Entrée (limite)</div><div class="val">${fmt(activeTrade.entry)}</div></div>
-      <div class="cell"><div class="lbl">Stop loss</div><div class="val">${fmt(activeTrade.sl)}${activeTrade.beArmed?' (BE)':''}</div></div>
-      <div class="cell"><div class="lbl">Take profit</div><div class="val">${fmt(activeTrade.tp)}</div></div>
-      <div class="cell"><div class="lbl">RR cible</div><div class="val">1 : ${settings.tpTrigger}</div></div>
-    </div>`;
+      <div class="cell"><div class="lbl">Stop Loss</div><div class="val">\( {fmt(activeTrade.sl)} \){activeTrade.beArmed?' (BE)':''}</div></div>
+      <div class="cell"><div class="lbl">TP1 / TP2 / TP3</div><div class="val">${fmt(activeTrade.tp1)} / ${fmt(activeTrade.tp2)} / ${fmt(activeTrade.tp3)}</div></div>
+      <div class="cell"><div class="lbl">Risque</div><div class="val">${fmt(activeTrade.risk)} pts</div></div>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--muted)">Progression TP</div>
+    <div class="rr-bar"><div class="rr-fill" style="width:${progress}%"></div></div>
+  `;
 }
 
 function renderZones(analysis){
@@ -712,21 +760,21 @@ function renderZones(analysis){
   if(!analysis){ activeWrap.innerHTML='<p class="empty-note">Analyse en cours…</p>'; return; }
 
   const zones = [
-    ...analysis.obs.map(o=>({type:'Order Block', dir:o.dir, price:(o.top+o.bottom)/2, score:o.score, invalid:o.invalid})),
+    ...analysis.obs.map(o=>({type:'Order Block', dir:o.dir, price:(o.top+o.bottom)/2, score:o.score, invalid:o.invalid, src:o.source})),
     ...analysis.liquidity.map(p=>({type:p.kind, dir:p.kind==='BSL'?'bear':'bull', price:p.price, score:Math.min(100,40+p.count*15), invalid:p.invalid})),
   ].sort((a,b)=>b.score-a.score);
 
   const active = zones.filter(z=>!z.invalid).slice(0,8);
-  const invalid = zones.filter(z=>z.invalid).slice(0,8);
+  const invalid = zones.filter(z=>z.invalid).slice(0,6);
 
   activeWrap.innerHTML = active.length ? active.map(z=>`
     <div class="zone ${z.dir==='bull'?'bull':'bear'}">
       <div class="z-main">
-        <span class="z-tag">${z.type} · ${z.dir==='bull'?'haussier':'baissier'}</span>
+        <span class="z-tag">${z.type} · \( {z.dir==='bull'?'haussier':'baissier'} \){z.src?' · '+z.src:''}</span>
         <span class="z-price">${fmt(z.price)}</span>
       </div>
       <span class="z-score">${z.score}%</span>
-    </div>`).join('') : '<p class="empty-note">Aucune zone active pour l\'instant.</p>';
+    </div>`).join('') : '<p class="empty-note">Aucune zone active.</p>';
 
   invalidWrap.innerHTML = invalid.length ? invalid.map(z=>`
     <div class="zone invalid">
@@ -746,11 +794,11 @@ function renderHistory(){
     stats.innerHTML = '';
     return;
   }
-  const wins = history.filter(h=>h.result==='TP').length;
+  const wins = history.filter(h=>h.result.startsWith('TP')).length;
   const be = history.filter(h=>h.result==='BE').length;
   const losses = history.filter(h=>h.result==='SL').length;
   const winrate = ((wins/history.length)*100).toFixed(0);
-  const totalRR = history.reduce((s,h)=>s+h.rr,0).toFixed(1);
+  const totalRR = history.reduce((s,h)=>s+(h.rr||0),0).toFixed(1);
   stats.innerHTML = `
     <div class="s">Trades <b>${history.length}</b></div>
     <div class="s">TP <b>${wins}</b></div>
@@ -764,13 +812,13 @@ function renderHistory(){
       <td>${h.tf}</td>
       <td>${h.dir}</td>
       <td>${fmt(h.entry)}</td>
-      <td class="res-${h.result.toLowerCase()}">${h.result}</td>
-      <td>${h.rr>0?'+':''}${h.rr}</td>
+      <td class="res-\( {h.result.toLowerCase().startsWith('tp')?'tp':h.result.toLowerCase()}"> \){h.result}</td>
+      <td>\( {h.rr>0?'+':''} \){h.rr}</td>
     </tr>`).join('');
 }
 
 // ==========================================================================
-// 5. MAIN LOOP
+// 5. MAIN
 // ==========================================================================
 async function refreshAll(){
   try{
@@ -786,7 +834,7 @@ async function refreshAll(){
   }catch(e){
     console.error(e);
     document.getElementById('tradeBody').innerHTML =
-      `<p class="empty-note">Erreur de connexion aux données (${e.message}). Nouvel essai au prochain rafraîchissement.</p>`;
+      `<p class="empty-note">Erreur de connexion (${e.message}). Nouvel essai automatique.</p>`;
   }
 }
 
@@ -811,22 +859,26 @@ document.getElementById('exportBtn').addEventListener('click', ()=>{
 });
 
 document.getElementById('resetBtn').addEventListener('click', ()=>{
-  if(!confirm("Effacer tout l'historique des trades ?")) return;
+  if(!confirm("Effacer tout l'historique ?")) return;
   history = [];
   saveJSON(LS_KEYS.history, history);
   renderHistory();
 });
 
 function fillSettingsForm(){
-  document.getElementById('goldApiKey').value = settings.goldApiKey;
-  document.getElementById('beTrigger').value = settings.beTrigger;
-  document.getElementById('tpTrigger').value = settings.tpTrigger;
+  document.getElementById('goldApiKey').value = settings.goldApiKey || '';
+  document.getElementById('slMax').value = settings.slMax;
+  document.getElementById('tp1').value = settings.tp1;
+  document.getElementById('tp2').value = settings.tp2;
+  document.getElementById('tp3').value = settings.tp3;
   document.getElementById('autoMin').value = settings.autoMin;
 }
 document.getElementById('saveSettings').addEventListener('click', ()=>{
   settings.goldApiKey = document.getElementById('goldApiKey').value.trim();
-  settings.beTrigger = parseFloat(document.getElementById('beTrigger').value)||2;
-  settings.tpTrigger = parseFloat(document.getElementById('tpTrigger').value)||3;
+  settings.slMax = parseFloat(document.getElementById('slMax').value)||10;
+  settings.tp1 = parseFloat(document.getElementById('tp1').value)||10;
+  settings.tp2 = parseFloat(document.getElementById('tp2').value)||20;
+  settings.tp3 = parseFloat(document.getElementById('tp3').value)||30;
   settings.autoMin = parseInt(document.getElementById('autoMin').value)||0;
   saveJSON(LS_KEYS.settings, settings);
   fetchSpotPrice();
@@ -841,14 +893,14 @@ function setupAutoRefresh(){
   }
 }
 
-// ---- boot ----------------------------------------------------------------
+// Boot
 fillSettingsForm();
 renderTrade();
 renderHistory();
 refreshAll();
 fetchSpotPrice();
 setupAutoRefresh();
-setInterval(refreshAll, 60*1000); // Binance candles: refresh every 60s (free, no key, generous limit)
+setInterval(refreshAll, 60*1000);
 </script>
 </body>
 </html>
