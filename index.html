@@ -88,7 +88,11 @@
   .tf-tabs button.active{background:var(--gold);color:#161708;}
   .tf-tabs button:hover:not(.active){color:var(--text);}
 
-  #chart{width:100%;height:380px;border-radius:9px;overflow:hidden;}
+  #chart{width:100%;height:380px;border-radius:9px;overflow:hidden;position:relative;}
+  .chart-error{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    background:var(--panel);color:var(--muted);font-size:13px;text-align:center;padding:20px;
+  }
   .chart-legend{display:flex;gap:16px;font-size:11px;color:var(--muted);margin-top:10px;flex-wrap:wrap;}
   .chart-legend .dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;}
 
@@ -128,7 +132,6 @@
   .zone{
     display:flex;align-items:center;justify-content:space-between;gap:10px;
     padding:11px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px;
-    transition:opacity .2s;
   }
   .zone .z-main{display:flex;flex-direction:column;gap:2px;}
   .zone .z-tag{font-size:10px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;}
@@ -190,7 +193,6 @@
 <main>
 
   <div class="row split">
-    <!-- CHART -->
     <div class="card">
       <h2>
         Graphique <small id="tfNote">Binance PAXG/USDT — proxy or (M5/M15/M30)</small>
@@ -201,7 +203,9 @@
         <button data-tf="5m">M5</button>
       </div>
       <div style="height:12px"></div>
-      <div id="chart"></div>
+      <div id="chart">
+        <div class="chart-error" id="chartError">Chargement des données…</div>
+      </div>
       <div class="chart-legend">
         <span><span class="dot" style="background:var(--gold)"></span>Order Block</span>
         <span><span class="dot" style="background:#5b8def"></span>Liquidité (BSL/SSL)</span>
@@ -209,7 +213,6 @@
       </div>
     </div>
 
-    <!-- TRADE STATUS -->
     <div class="card trade-status">
       <h2>Trade actif <small id="tradeTf"></small></h2>
       <div id="tradeBody"><p class="empty-note">Analyse en cours…</p></div>
@@ -217,7 +220,6 @@
   </div>
 
   <div class="row split">
-    <!-- ZONES -->
     <div class="card">
       <h2>Zones clés actives <small>confluence %</small></h2>
       <div id="zonesActive"><p class="empty-note">Aucune zone détectée pour l'instant.</p></div>
@@ -226,7 +228,6 @@ Zones invalidées
         <div class="body" id="zonesInvalid"></div>
     </div>
 
-    <!-- HISTORY -->
     <div class="card">
       <h2>Historique des trades</h2>
       <div class="stats" id="histStats"></div>
@@ -279,18 +280,10 @@ Zones invalidées
 </main>
 
 <script>
-/* =========================================================================
-   SMC GOLD SIGNAL DESK PRO
-   Stratégie : SH+BMS+RTO + SMS+BMS+RTO (Wade FX style)
-   Entry    : Limit order sur Order Block
-   SL       : max 10 points
-   TP       : 10 / 20 / 30 points (partial)
-   ========================================================================= */
-
 const LS_KEYS = {
-  settings: 'smc_pro_settings_v2',
-  trade: 'smc_pro_active_trade_v2',
-  history: 'smc_pro_history_v2',
+  settings: 'smc_pro_settings_v3',
+  trade: 'smc_pro_active_trade_v3',
+  history: 'smc_pro_history_v3',
 };
 
 const DEFAULT_SETTINGS = {
@@ -317,8 +310,8 @@ let candleCache = { '30m':[], '15m':[], '5m':[] };
 let analysisCache = { '30m':null, '15m':null, '5m':null };
 let currentTf = '30m';
 
-// ---- chart --------------------------------------------------------------
 const chartEl = document.getElementById('chart');
+const chartError = document.getElementById('chartError');
 const chart = LightweightCharts.createChart(chartEl, {
   layout:{ background:{color:'transparent'}, textColor:'#8891a3', fontFamily:"'IBM Plex Mono',monospace" },
   grid:{ vertLines:{color:'#1a1e26'}, horzLines:{color:'#1a1e26'} },
@@ -330,20 +323,20 @@ const candleSeries = chart.addCandlestickSeries({
   upColor:'#2fb374', downColor:'#e0526b', borderVisible:false,
   wickUpColor:'#2fb374', wickDownColor:'#e0526b',
 });
-new ResizeObserver(()=>{ chart.applyOptions({width:chartEl.clientWidth, height:chartEl.clientHeight}); })
-  .observe(chartEl);
+new ResizeObserver(()=>{ chart.applyOptions({width:chartEl.clientWidth, height:chartEl.clientHeight}); }).observe(chartEl);
 
-// ==========================================================================
-// 1. DATA
-// ==========================================================================
+// ========== DATA ==========
 async function fetchCandles(tf, limit=250){
   const url = `https://api.binance.com/api/v3/klines?symbol=PAXGUSDT&interval=\( {tf}&limit= \){limit}`;
   const res = await fetch(url);
-  if(!res.ok) throw new Error('Binance '+res.status);
+  if(!res.ok) throw new Error('Binance HTTP '+res.status);
   const raw = await res.json();
   return raw.map(k => ({
     time: Math.floor(k[0]/1000),
-    open:+k[1], high:+k[2], low:+k[3], close:+k[4],
+    open: +k[1],
+    high: +k[2],
+    low:  +k[3],
+    close:+k[4],
   }));
 }
 
@@ -351,35 +344,39 @@ async function fetchSpotPrice(){
   const key = settings.goldApiKey.trim();
   const src = document.getElementById('pxSrc');
   const dot = document.getElementById('liveDot');
-  if(!key){ src.textContent = 'GoldAPI · ajoutez votre clé dans Réglages'; dot.style.display='none'; return; }
+  if(!key){
+    src.textContent = 'GoldAPI · ajoutez votre clé dans Réglages';
+    dot.style.display = 'none';
+    return;
+  }
   src.textContent = 'GoldAPI · actualisation…';
   try{
-    const res = await fetch('https://www.goldapi.io/api/XAU/USD', { headers:{ 'x-access-token': key } });
+    const res = await fetch('https://www.goldapi.io/api/XAU/USD', {
+      headers: { 'x-access-token': key }
+    });
     if(!res.ok) throw new Error('HTTP '+res.status);
     const d = await res.json();
     document.getElementById('livePx').textContent = d.price ? d.price.toFixed(2) : '—';
     const chg = document.getElementById('livePxChg');
     if(typeof d.chp === 'number'){
-      chg.textContent = (d.chp>=0?'+':'')+d.chp.toFixed(2)+'%';
-      chg.className = 'chg mono '+(d.chp>=0?'up':'down');
+      chg.textContent = (d.chp>=0?'+':'') + d.chp.toFixed(2) + '%';
+      chg.className = 'chg mono ' + (d.chp>=0?'up':'down');
     }
-    src.textContent = 'GoldAPI · '+new Date().toLocaleTimeString();
+    src.textContent = 'GoldAPI · ' + new Date().toLocaleTimeString();
     dot.style.display = 'inline-block';
   }catch(e){
     src.textContent = 'GoldAPI · échec ('+e.message+')';
-    dot.style.display='none';
+    dot.style.display = 'none';
   }
 }
 
-// ==========================================================================
-// 2. SMC ENGINE (Wade FX style)
-// ==========================================================================
+// ========== SMC ENGINE ==========
 function findSwings(candles, left=2, right=2){
   const swings = [];
-  for(let i=left;i<candles.length-right;i++){
+  for(let i=left; i<candles.length-right; i++){
     const c = candles[i];
     let isHigh=true, isLow=true;
-    for(let j=i-left;j<=i+right;j++){
+    for(let j=i-left; j<=i+right; j++){
       if(j===i) continue;
       if(candles[j].high >= c.high) isHigh=false;
       if(candles[j].low  <= c.low ) isLow=false;
@@ -406,7 +403,7 @@ function analyzeStructure(candles, swings){
         if(trend==='down'){
           events.push({i:s.i, time:s.time, kind:'BMS', dir:'up', level:lastHigh.price});
         }
-        trend='up';
+        trend = 'up';
         lastHigh = s;
       }
     } else {
@@ -414,26 +411,22 @@ function analyzeStructure(candles, swings){
         if(trend==='up'){
           events.push({i:s.i, time:s.time, kind:'BMS', dir:'down', level:lastLow.price});
         }
-        trend='down';
+        trend = 'down';
         lastLow = s;
       }
     }
   }
 
-  // SMS (Failure Swing)
-  for(let k=1;k<all.length;k++){
+  // SMS
+  for(let k=1; k<all.length; k++){
     const prev = all[k-1], cur = all[k];
     if(prev.type==='high' && cur.type==='high' && cur.price < prev.price){
-      const nextLow = lows.find(l=>l.i>cur.i);
-      if(nextLow){
-        events.push({i:nextLow.i, time:nextLow.time, kind:'SMS', dir:'down', level:prev.price});
-      }
+      const nextLow = lows.find(l=>l.i > cur.i);
+      if(nextLow) events.push({i:nextLow.i, time:nextLow.time, kind:'SMS', dir:'down', level:prev.price});
     }
     if(prev.type==='low' && cur.type==='low' && cur.price > prev.price){
-      const nextHigh = highs.find(h=>h.i>cur.i);
-      if(nextHigh){
-        events.push({i:nextHigh.i, time:nextHigh.time, kind:'SMS', dir:'up', level:prev.price});
-      }
+      const nextHigh = highs.find(h=>h.i > cur.i);
+      if(nextHigh) events.push({i:nextHigh.i, time:nextHigh.time, kind:'SMS', dir:'up', level:prev.price});
     }
   }
 
@@ -447,23 +440,24 @@ function findOrderBlocks(candles, events){
     if(ev.kind!=='BMS' && ev.kind!=='SMS') continue;
     let obIdx = -1;
     if(ev.dir==='up'){
-      // dernière bougie baissière avant le BMS
-      for(let j=ev.i-1;j>=Math.max(0,ev.i-15);j--){
+      for(let j=ev.i-1; j>=Math.max(0,ev.i-15); j--){
         if(candles[j].close < candles[j].open){ obIdx=j; break; }
       }
     } else {
-      for(let j=ev.i-1;j>=Math.max(0,ev.i-15);j--){
+      for(let j=ev.i-1; j>=Math.max(0,ev.i-15); j--){
         if(candles[j].close > candles[j].open){ obIdx=j; break; }
       }
     }
-    if(obIdx<0) continue;
+    if(obIdx < 0) continue;
     const c = candles[obIdx];
     obs.push({
       dir: ev.dir==='up' ? 'bull' : 'bear',
-      top: Math.max(c.open,c.close,c.high),
-      bottom: Math.min(c.open,c.close,c.low),
-      time: c.time, i: obIdx, bmsIndex: ev.i,
-      source: ev.kind // BMS or SMS
+      top: Math.max(c.open, c.close, c.high),
+      bottom: Math.min(c.open, c.close, c.low),
+      time: c.time,
+      i: obIdx,
+      bmsIndex: ev.i,
+      source: ev.kind
     });
   }
   return obs;
@@ -473,38 +467,48 @@ function findLiquidity(swings, tolPct=0.0008){
   const pools = [];
   const highs = swings.filter(s=>s.type==='high').sort((a,b)=>a.i-b.i);
   const lows  = swings.filter(s=>s.type==='low').sort((a,b)=>a.i-b.i);
+
   function cluster(list, kind){
     const used = new Array(list.length).fill(false);
-    for(let i=0;i<list.length;i++){
+    for(let i=0; i<list.length; i++){
       if(used[i]) continue;
-      const group=[list[i]]; used[i]=true;
-      for(let j=i+1;j<list.length;j++){
+      const group = [list[i]];
+      used[i] = true;
+      for(let j=i+1; j<list.length; j++){
         if(used[j]) continue;
-        if(Math.abs(list[j].price-list[i].price)/list[i].price < tolPct){
-          group.push(list[j]); used[j]=true;
+        if(Math.abs(list[j].price - list[i].price) / list[i].price < tolPct){
+          group.push(list[j]);
+          used[j] = true;
         }
       }
-      const avg = group.reduce((s,g)=>s+g.price,0)/group.length;
-      pools.push({ kind, price:avg, count:group.length, time:group[group.length-1].time, i:group[group.length-1].i });
+      const avg = group.reduce((s,g)=>s+g.price,0) / group.length;
+      pools.push({
+        kind,
+        price: avg,
+        count: group.length,
+        time: group[group.length-1].time,
+        i: group[group.length-1].i
+      });
     }
   }
-  cluster(highs,'BSL');
-  cluster(lows,'SSL');
+  cluster(highs, 'BSL');
+  cluster(lows, 'SSL');
   return pools;
 }
 
 function findSweeps(candles, pools){
-  const sweeps=[];
-  const lastIdx = candles.length-1;
+  const sweeps = [];
   for(const p of pools){
-    if(p.i >= lastIdx-1) continue;
-    for(let j=p.i+1;j<candles.length;j++){
+    if(p.i >= candles.length-2) continue;
+    for(let j=p.i+1; j<candles.length; j++){
       const c = candles[j];
-      if(p.kind==='BSL' && c.high>p.price && c.close<p.price){
-        sweeps.push({ kind:'SH', dir:'down', pool:p, i:j, time:c.time }); break;
+      if(p.kind==='BSL' && c.high > p.price && c.close < p.price){
+        sweeps.push({kind:'SH', dir:'down', pool:p, i:j, time:c.time});
+        break;
       }
-      if(p.kind==='SSL' && c.low<p.price && c.close>p.price){
-        sweeps.push({ kind:'SH', dir:'up', pool:p, i:j, time:c.time }); break;
+      if(p.kind==='SSL' && c.low < p.price && c.close > p.price){
+        sweeps.push({kind:'SH', dir:'up', pool:p, i:j, time:c.time});
+        break;
       }
     }
   }
@@ -518,8 +522,8 @@ function analyzeTF(candles){
   const obs = findOrderBlocks(candles, structure.events);
   const liquidity = findLiquidity(swings);
   const sweeps = findSweeps(candles, liquidity);
+  const last = candles.length - 1;
 
-  const last = candles.length-1;
   for(const ob of obs){
     ob.invalid = false;
     for(let j=ob.bmsIndex; j<=last; j++){
@@ -530,34 +534,28 @@ function analyzeTF(candles){
   }
   for(const p of liquidity){
     p.invalid = false;
-    for(let j=p.i+1;j<=last;j++){
-      const c=candles[j];
-      if(p.kind==='BSL' && c.close>p.price){ p.invalid=true; }
-      if(p.kind==='SSL' && c.close<p.price){ p.invalid=true; }
+    for(let j=p.i+1; j<=last; j++){
+      const c = candles[j];
+      if(p.kind==='BSL' && c.close > p.price) p.invalid = true;
+      if(p.kind==='SSL' && c.close < p.price) p.invalid = true;
     }
   }
 
-  // Confluence score (Wade style)
   for(const ob of obs){
-    let score = 45; // base OB from BMS/SMS
+    let score = 45;
     if(ob.source === 'SMS') score += 10;
-
     const hasSweep = sweeps.some(s => Math.abs(s.i - ob.i) < 20 &&
-      ((ob.dir==='bull'&&s.dir==='up')||(ob.dir==='bear'&&s.dir==='down')));
-    if(hasSweep) score += 25; // SH+BMS+RTO
-
-    const nearbyLiq = liquidity.some(p => Math.abs(p.price-((ob.top+ob.bottom)/2))/ob.top < 0.008);
+      ((ob.dir==='bull' && s.dir==='up') || (ob.dir==='bear' && s.dir==='down')));
+    if(hasSweep) score += 25;
+    const nearbyLiq = liquidity.some(p => Math.abs(p.price - ((ob.top+ob.bottom)/2)) / ob.top < 0.008);
     if(nearbyLiq) score += 10;
-
-    if(structure.trend === (ob.dir==='bull'?'up':'down')) score += 10;
-
+    if(structure.trend === (ob.dir==='bull' ? 'up' : 'down')) score += 10;
     ob.score = Math.min(100, score);
   }
 
   return { candles, swings, structure, obs, liquidity, sweeps, last };
 }
 
-// Signal = RTO vers un OB de haute qualité (SH ou SMS confluence)
 function findSignal(analysis, tf){
   if(!analysis) return null;
   const { candles, obs, last } = analysis;
@@ -565,73 +563,70 @@ function findSignal(analysis, tf){
 
   const candidates = obs
     .filter(ob => !ob.invalid && ob.score >= 70)
-    .sort((a,b)=> b.i - a.i);
+    .sort((a,b) => b.i - a.i);
 
   for(const ob of candidates){
-    const mid = (ob.top + ob.bottom)/2;
-    const dist = Math.abs(price - mid)/price;
-    if(dist > 0.015) continue; // trop loin
+    const mid = (ob.top + ob.bottom) / 2;
+    const dist = Math.abs(price - mid) / price;
+    if(dist > 0.015) continue;
 
-    // Limit entry at near edge of OB
     const entry = ob.dir==='bull' ? ob.top : ob.bottom;
     const slBase = ob.dir==='bull' ? ob.bottom : ob.top;
     let risk = Math.abs(entry - slBase);
-
-    // SL max 10 points
     if(risk > settings.slMax) risk = settings.slMax;
-    if(risk < 3) continue; // trop serré
+    if(risk < 3) continue;
 
-    const sl = ob.dir==='bull' ? entry - risk : entry + risk;
+    const sl  = ob.dir==='bull' ? entry - risk : entry + risk;
     const tp1 = ob.dir==='bull' ? entry + settings.tp1 : entry - settings.tp1;
     const tp2 = ob.dir==='bull' ? entry + settings.tp2 : entry - settings.tp2;
     const tp3 = ob.dir==='bull' ? entry + settings.tp3 : entry - settings.tp3;
 
     return {
-      tf, dir: ob.dir==='bull'?'ACHAT':'VENTE',
+      tf,
+      dir: ob.dir==='bull' ? 'ACHAT' : 'VENTE',
       entry, sl, tp1, tp2, tp3,
-      risk, score: ob.score, obTime: ob.time,
-      source: ob.source + (ob.score>=85?'+SH':'')
+      risk,
+      score: ob.score,
+      source: ob.source + (ob.score >= 85 ? '+SH' : '')
     };
   }
   return null;
 }
 
-// ==========================================================================
-// 3. TRADE STATE MACHINE (points based)
-// ==========================================================================
+// ========== TRADE STATE ==========
 function evaluateTrade(analysisByTf){
-  const now = Date.now()/1000;
-  const anyTf = analysisByTf[currentTf];
-  const refPrice = anyTf ? anyTf.candles[anyTf.last].close : null;
+  const now = Date.now() / 1000;
 
-  if(activeTrade && activeTrade.status!=='closed'){
+  if(activeTrade && activeTrade.status !== 'closed'){
     const tfA = analysisByTf[activeTrade.tf];
     if(tfA){
       const px = tfA.candles[tfA.last].close;
-      const dirUp = activeTrade.dir==='ACHAT';
+      const dirUp = activeTrade.dir === 'ACHAT';
 
-      if(activeTrade.status==='pending'){
-        const filled = dirUp ? px<=activeTrade.entry : px>=activeTrade.entry;
-        if(filled){ activeTrade.status='active'; activeTrade.filledAt=now; }
+      if(activeTrade.status === 'pending'){
+        const filled = dirUp ? px <= activeTrade.entry : px >= activeTrade.entry;
+        if(filled){
+          activeTrade.status = 'active';
+          activeTrade.filledAt = now;
+        }
       }
 
-      if(activeTrade.status==='active'){
-        // Partial TP logic
+      if(activeTrade.status === 'active'){
         if(!activeTrade.tp1Hit){
-          const hit1 = dirUp ? px>=activeTrade.tp1 : px<=activeTrade.tp1;
+          const hit1 = dirUp ? px >= activeTrade.tp1 : px <= activeTrade.tp1;
           if(hit1){
             activeTrade.tp1Hit = true;
-            activeTrade.sl = activeTrade.entry; // BE after TP1
+            activeTrade.sl = activeTrade.entry;
             activeTrade.beArmed = true;
           }
         }
         if(activeTrade.tp1Hit && !activeTrade.tp2Hit){
-          const hit2 = dirUp ? px>=activeTrade.tp2 : px<=activeTrade.tp2;
+          const hit2 = dirUp ? px >= activeTrade.tp2 : px <= activeTrade.tp2;
           if(hit2) activeTrade.tp2Hit = true;
         }
 
-        const hitTP3 = dirUp ? px>=activeTrade.tp3 : px<=activeTrade.tp3;
-        const hitSL  = dirUp ? px<=activeTrade.sl  : px>=activeTrade.sl;
+        const hitTP3 = dirUp ? px >= activeTrade.tp3 : px <= activeTrade.tp3;
+        const hitSL  = dirUp ? px <= activeTrade.sl  : px >= activeTrade.sl;
 
         if(hitTP3 || hitSL){
           let outcome = 'SL';
@@ -651,10 +646,14 @@ function evaluateTrade(analysisByTf){
           }
 
           history.unshift({
-            date:new Date().toISOString(), tf:activeTrade.tf, dir:activeTrade.dir,
-            entry:activeTrade.entry, result:outcome, rr:+rrFinal.toFixed(2),
+            date: new Date().toISOString(),
+            tf: activeTrade.tf,
+            dir: activeTrade.dir,
+            entry: activeTrade.entry,
+            result: outcome,
+            rr: +rrFinal.toFixed(2)
           });
-          history = history.slice(0,100);
+          history = history.slice(0, 100);
           saveJSON(LS_KEYS.history, history);
           activeTrade = null;
         }
@@ -668,11 +667,11 @@ function evaluateTrade(analysisByTf){
       if(sig){
         activeTrade = {
           ...sig,
-          status:'pending',
-          beArmed:false,
-          tp1Hit:false,
-          tp2Hit:false,
-          openedAt:now
+          status: 'pending',
+          beArmed: false,
+          tp1Hit: false,
+          tp2Hit: false,
+          openedAt: now
         };
         break;
       }
@@ -680,15 +679,19 @@ function evaluateTrade(analysisByTf){
   }
 
   saveJSON(LS_KEYS.trade, activeTrade);
-  return refPrice;
 }
 
-// ==========================================================================
-// 4. RENDER
-// ==========================================================================
+// ========== RENDER ==========
 function renderChart(analysis){
-  if(!analysis) return;
-  candleSeries.setData(analysis.candles.map(c=>({time:c.time, open:c.open, high:c.high, low:c.low, close:c.close})));
+  if(!analysis || !analysis.candles.length){
+    chartError.style.display = 'flex';
+    chartError.textContent = 'Aucune donnée disponible';
+    return;
+  }
+  chartError.style.display = 'none';
+  candleSeries.setData(analysis.candles.map(c => ({
+    time: c.time, open: c.open, high: c.high, low: c.low, close: c.close
+  })));
 
   const markers = [];
   for(const ev of analysis.structure.events){
@@ -697,30 +700,32 @@ function renderChart(analysis){
       position: ev.dir==='up' ? 'belowBar' : 'aboveBar',
       color: ev.dir==='up' ? '#2fb374' : '#e0526b',
       shape: ev.dir==='up' ? 'arrowUp' : 'arrowDown',
-      text: ev.kind,
+      text: ev.kind
     });
   }
   candleSeries.setMarkers(markers);
 
-  (candleSeries._smcLines||[]).forEach(l=>candleSeries.removePriceLine(l));
+  (candleSeries._smcLines || []).forEach(l => candleSeries.removePriceLine(l));
   candleSeries._smcLines = [];
-  const activeObs = analysis.obs.filter(o=>!o.invalid).slice(-5);
+  const activeObs = analysis.obs.filter(o => !o.invalid).slice(-5);
   for(const ob of activeObs){
     const line = candleSeries.createPriceLine({
-      price:(ob.top+ob.bottom)/2,
+      price: (ob.top + ob.bottom) / 2,
       color: '#c9a227',
-      lineWidth:1, lineStyle:2, axisLabelVisible:true,
-      title: (ob.dir==='bull'?'OB↑':'OB↓')+' '+ob.score+'%',
+      lineWidth: 1,
+      lineStyle: 2,
+      axisLabelVisible: true,
+      title: (ob.dir==='bull' ? 'OB↑' : 'OB↓') + ' ' + ob.score + '%'
     });
     candleSeries._smcLines.push(line);
   }
 }
 
-function fmt(n){ return n==null ? '—' : Number(n).toFixed(2); }
+function fmt(n){ return n == null ? '—' : Number(n).toFixed(2); }
 
 function renderTrade(){
   const body = document.getElementById('tradeBody');
-  document.getElementById('tradeTf').textContent = activeTrade ? '· '+activeTrade.tf.toUpperCase() : '';
+  document.getElementById('tradeTf').textContent = activeTrade ? '· ' + activeTrade.tf.toUpperCase() : '';
 
   if(!activeTrade){
     body.innerHTML = `<span class="badge scan">🔍 Recherche de setup</span>
@@ -729,7 +734,7 @@ function renderTrade(){
   }
 
   let badge = '';
-  if(activeTrade.status==='pending'){
+  if(activeTrade.status === 'pending'){
     badge = '<span class="badge pending">⏳ Ordre limite en attente</span>';
   } else if(activeTrade.beArmed){
     badge = '<span class="badge be">🟡 BE armé (après TP1)</span>';
@@ -757,17 +762,33 @@ function renderTrade(){
 function renderZones(analysis){
   const activeWrap = document.getElementById('zonesActive');
   const invalidWrap = document.getElementById('zonesInvalid');
-  if(!analysis){ activeWrap.innerHTML='<p class="empty-note">Analyse en cours…</p>'; return; }
+  if(!analysis){
+    activeWrap.innerHTML = '<p class="empty-note">Analyse en cours…</p>';
+    return;
+  }
 
   const zones = [
-    ...analysis.obs.map(o=>({type:'Order Block', dir:o.dir, price:(o.top+o.bottom)/2, score:o.score, invalid:o.invalid, src:o.source})),
-    ...analysis.liquidity.map(p=>({type:p.kind, dir:p.kind==='BSL'?'bear':'bull', price:p.price, score:Math.min(100,40+p.count*15), invalid:p.invalid})),
-  ].sort((a,b)=>b.score-a.score);
+    ...analysis.obs.map(o => ({
+      type: 'Order Block',
+      dir: o.dir,
+      price: (o.top + o.bottom) / 2,
+      score: o.score,
+      invalid: o.invalid,
+      src: o.source
+    })),
+    ...analysis.liquidity.map(p => ({
+      type: p.kind,
+      dir: p.kind==='BSL' ? 'bear' : 'bull',
+      price: p.price,
+      score: Math.min(100, 40 + p.count * 15),
+      invalid: p.invalid
+    }))
+  ].sort((a,b) => b.score - a.score);
 
-  const active = zones.filter(z=>!z.invalid).slice(0,8);
-  const invalid = zones.filter(z=>z.invalid).slice(0,6);
+  const active = zones.filter(z => !z.invalid).slice(0, 8);
+  const invalid = zones.filter(z => z.invalid).slice(0, 6);
 
-  activeWrap.innerHTML = active.length ? active.map(z=>`
+  activeWrap.innerHTML = active.length ? active.map(z => `
     <div class="zone ${z.dir==='bull'?'bull':'bear'}">
       <div class="z-main">
         <span class="z-tag">${z.type} · \( {z.dir==='bull'?'haussier':'baissier'} \){z.src?' · '+z.src:''}</span>
@@ -776,7 +797,7 @@ function renderZones(analysis){
       <span class="z-score">${z.score}%</span>
     </div>`).join('') : '<p class="empty-note">Aucune zone active.</p>';
 
-  invalidWrap.innerHTML = invalid.length ? invalid.map(z=>`
+  invalidWrap.innerHTML = invalid.length ? invalid.map(z => `
     <div class="zone invalid">
       <div class="z-main">
         <span class="z-tag">${z.type}</span>
@@ -794,11 +815,12 @@ function renderHistory(){
     stats.innerHTML = '';
     return;
   }
-  const wins = history.filter(h=>h.result.startsWith('TP')).length;
-  const be = history.filter(h=>h.result==='BE').length;
-  const losses = history.filter(h=>h.result==='SL').length;
-  const winrate = ((wins/history.length)*100).toFixed(0);
-  const totalRR = history.reduce((s,h)=>s+(h.rr||0),0).toFixed(1);
+  const wins = history.filter(h => h.result.startsWith('TP')).length;
+  const be = history.filter(h => h.result === 'BE').length;
+  const losses = history.filter(h => h.result === 'SL').length;
+  const winrate = ((wins / history.length) * 100).toFixed(0);
+  const totalRR = history.reduce((s,h) => s + (h.rr || 0), 0).toFixed(1);
+
   stats.innerHTML = `
     <div class="s">Trades <b>${history.length}</b></div>
     <div class="s">TP <b>${wins}</b></div>
@@ -806,21 +828,22 @@ function renderHistory(){
     <div class="s">SL <b>${losses}</b></div>
     <div class="s">Winrate <b>${winrate}%</b></div>
     <div class="s">RR cumulé <b>${totalRR}</b></div>`;
-  body.innerHTML = history.map(h=>`
+
+  body.innerHTML = history.map(h => `
     <tr>
       <td>${new Date(h.date).toLocaleDateString()} ${new Date(h.date).toLocaleTimeString().slice(0,5)}</td>
       <td>${h.tf}</td>
       <td>${h.dir}</td>
       <td>${fmt(h.entry)}</td>
       <td class="res-\( {h.result.toLowerCase().startsWith('tp')?'tp':h.result.toLowerCase()}"> \){h.result}</td>
-      <td>\( {h.rr>0?'+':''} \){h.rr}</td>
+      <td>\( {h.rr > 0 ? '+' : ''} \){h.rr}</td>
     </tr>`).join('');
 }
 
-// ==========================================================================
-// 5. MAIN
-// ==========================================================================
+// ========== MAIN ==========
 async function refreshAll(){
+  chartError.style.display = 'flex';
+  chartError.textContent = 'Chargement des données…';
   try{
     for(const tf of TIMEFRAMES){
       candleCache[tf] = await fetchCandles(tf);
@@ -833,15 +856,17 @@ async function refreshAll(){
     renderHistory();
   }catch(e){
     console.error(e);
+    chartError.style.display = 'flex';
+    chartError.innerHTML = `Erreur de connexion<br><small>${e.message}</small><br><button class="btn" style="margin-top:12px" onclick="refreshAll()">Réessayer</button>`;
     document.getElementById('tradeBody').innerHTML =
-      `<p class="empty-note">Erreur de connexion (${e.message}). Nouvel essai automatique.</p>`;
+      `<p class="empty-note">Erreur de connexion (${e.message}). Cliquez sur Réessayer.</p>`;
   }
 }
 
-document.getElementById('tfTabs').addEventListener('click', e=>{
+document.getElementById('tfTabs').addEventListener('click', e => {
   const btn = e.target.closest('button[data-tf]');
   if(!btn) return;
-  document.querySelectorAll('#tfTabs button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#tfTabs button').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   currentTf = btn.dataset.tf;
   renderChart(analysisCache[currentTf]);
@@ -850,15 +875,15 @@ document.getElementById('tfTabs').addEventListener('click', e=>{
 
 document.getElementById('refreshPxBtn').addEventListener('click', fetchSpotPrice);
 
-document.getElementById('exportBtn').addEventListener('click', ()=>{
-  const blob = new Blob([JSON.stringify(history,null,2)], {type:'application/json'});
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(history, null, 2)], {type: 'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'smc-gold-history.json';
   a.click();
 });
 
-document.getElementById('resetBtn').addEventListener('click', ()=>{
+document.getElementById('resetBtn').addEventListener('click', () => {
   if(!confirm("Effacer tout l'historique ?")) return;
   history = [];
   saveJSON(LS_KEYS.history, history);
@@ -873,23 +898,24 @@ function fillSettingsForm(){
   document.getElementById('tp3').value = settings.tp3;
   document.getElementById('autoMin').value = settings.autoMin;
 }
-document.getElementById('saveSettings').addEventListener('click', ()=>{
+
+document.getElementById('saveSettings').addEventListener('click', () => {
   settings.goldApiKey = document.getElementById('goldApiKey').value.trim();
-  settings.slMax = parseFloat(document.getElementById('slMax').value)||10;
-  settings.tp1 = parseFloat(document.getElementById('tp1').value)||10;
-  settings.tp2 = parseFloat(document.getElementById('tp2').value)||20;
-  settings.tp3 = parseFloat(document.getElementById('tp3').value)||30;
-  settings.autoMin = parseInt(document.getElementById('autoMin').value)||0;
+  settings.slMax = parseFloat(document.getElementById('slMax').value) || 10;
+  settings.tp1 = parseFloat(document.getElementById('tp1').value) || 10;
+  settings.tp2 = parseFloat(document.getElementById('tp2').value) || 20;
+  settings.tp3 = parseFloat(document.getElementById('tp3').value) || 30;
+  settings.autoMin = parseInt(document.getElementById('autoMin').value) || 0;
   saveJSON(LS_KEYS.settings, settings);
   fetchSpotPrice();
   setupAutoRefresh();
 });
 
-let autoTimer=null;
+let autoTimer = null;
 function setupAutoRefresh(){
   if(autoTimer) clearInterval(autoTimer);
-  if(settings.autoMin>0){
-    autoTimer = setInterval(refreshAll, settings.autoMin*60*1000);
+  if(settings.autoMin > 0){
+    autoTimer = setInterval(refreshAll, settings.autoMin * 60 * 1000);
   }
 }
 
@@ -900,7 +926,7 @@ renderHistory();
 refreshAll();
 fetchSpotPrice();
 setupAutoRefresh();
-setInterval(refreshAll, 60*1000);
+setInterval(refreshAll, 60 * 1000);
 </script>
 </body>
 </html>
