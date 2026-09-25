@@ -87,10 +87,7 @@
   }
 
   /* Price ticker */
-  .ticker-card {
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 14px;
-  }
+  .ticker-card { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
   .ticker-left { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
   .ticker-price { font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 700; letter-spacing: -.5px; }
   .ticker-change { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; padding: 3px 10px; border-radius: 8px; }
@@ -104,21 +101,31 @@
   .pill.open .dot { background: var(--bull); }
   .pill.closed .dot { background: var(--bear); }
 
-  /* TradingView */
   #tv_chart { height: 420px; border-radius: 10px; overflow: hidden; }
 
-  /* Signal Card */
+  /* Signal cards */
+  .dual-signals { display: flex; flex-direction: column; gap: 12px; }
   .signal-box {
     background: linear-gradient(145deg, #0d1321, #111827);
     border: 1px solid var(--line);
     border-radius: 12px; padding: 16px;
   }
-  .signal-dir { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .signal-box.status-pending { border-style: dashed; opacity: .9; }
+  .signal-box.status-cancelled { opacity: .5; }
+  .signal-status {
+    font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 6px;
+    display: inline-block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .3px;
+  }
+  .signal-status.pending { background: rgba(255,176,32,.15); color: var(--warn); }
+  .signal-status.active { background: rgba(0,230,118,.15); color: var(--bull); }
+  .signal-status.cancelled { background: rgba(122,139,163,.15); color: var(--muted); }
+  .signal-status.closed { background: rgba(0,212,255,.15); color: var(--cyan); }
+  .signal-dir { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
   .signal-dir.buy { color: var(--bull); }
   .signal-dir.sell { color: var(--bear); }
   .signal-type {
     display: inline-block; font-size: 11px; font-weight: 600;
-    padding: 3px 10px; border-radius: 6px; margin-bottom: 12px;
+    padding: 3px 10px; border-radius: 6px; margin-bottom: 12px; margin-left: 6px;
     background: rgba(0,212,255,.12); color: var(--cyan);
   }
   .levels { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
@@ -136,13 +143,11 @@
   .prob-bar { height: 6px; background: var(--panel-2); border-radius: 4px; overflow: hidden; margin-top: 8px; }
   .prob-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--cyan), var(--bull)); transition: width .4s; }
 
-  /* Stats */
   .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; }
   .stat { background: var(--panel-2); border-radius: 10px; padding: 12px; text-align: center; }
   .stat .num { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; }
   .stat .lbl { font-size: 10px; color: var(--muted); margin-top: 2px; text-transform: uppercase; }
 
-  /* Zones */
   .zone { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 8px; margin-bottom: 6px; background: var(--panel-2); border-left: 3px solid transparent; }
   .zone.bull { border-left-color: var(--bull); }
   .zone.bear { border-left-color: var(--bear); }
@@ -151,12 +156,10 @@
   .zone .z-price { font-family: 'JetBrains Mono', monospace; font-weight: 500; }
   .zone .z-score { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--cyan); }
 
-  /* AI Insight */
   .ai-box { background: linear-gradient(135deg, rgba(0,212,255,.08), rgba(0,102,255,.06)); border: 1px solid rgba(0,212,255,.2); border-radius: 12px; padding: 14px; }
   .ai-box .ai-title { font-size: 11px; font-weight: 600; color: var(--cyan); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
   .ai-box p { font-size: 13px; line-height: 1.5; color: var(--text); }
 
-  /* Controls */
   .controls-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
   .field { display: flex; flex-direction: column; gap: 4px; }
   .field label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
@@ -186,9 +189,6 @@
   }
   .month-tab.active { background: linear-gradient(135deg, #00d4ff, #0066ff); color: #fff; border: none; }
 
-  .credits-note { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-
-  /* History */
   table { width: 100%; border-collapse: collapse; font-size: 12px; }
   th { text-align: left; color: var(--muted); font-weight: 500; padding: 8px 6px; border-bottom: 1px solid var(--line); font-size: 10px; text-transform: uppercase; }
   td { padding: 8px 6px; border-bottom: 1px solid var(--line); font-family: 'JetBrains Mono', monospace; }
@@ -196,8 +196,13 @@
   .res-sl { color: var(--bear); font-weight: 600; }
   .res-be { color: var(--warn); font-weight: 600; }
 
-  .empty { color: var(--muted); font-size: 13px; padding: 12px 0; }
+  .entry-log { max-height: 200px; overflow-y: auto; }
+  .entry-log-item { font-size: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 8px; }
+  .entry-log-item .el-dir.buy { color: var(--bull); font-weight: 600; }
+  .entry-log-item .el-dir.sell { color: var(--bear); font-weight: 600; }
+  .entry-log-item .el-time { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
 
+  .empty { color: var(--muted); font-size: 13px; padding: 12px 0; }
   .footer-note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 20px; line-height: 1.6; }
 </style>
 </head>
@@ -219,7 +224,6 @@
 
 <main>
 
-  <!-- Price ticker -->
   <div class="card ticker-card">
     <div class="ticker-left">
       <div class="ticker-price mono" id="tickerPrice">—</div>
@@ -232,7 +236,6 @@
     </div>
   </div>
 
-  <!-- Chart + Signal -->
   <div class="grid-2">
     <div class="card">
       <div class="card-title">
@@ -243,8 +246,8 @@
     </div>
 
     <div class="card">
-      <div class="card-title">Signal Actuel</div>
-      <div id="signalBox">
+      <div class="card-title">Signaux Actifs — Ordres Limit (max 2, zones les plus fortes)</div>
+      <div class="dual-signals" id="signalBox">
         <div class="empty">Connexion à l'API…</div>
       </div>
 
@@ -258,37 +261,6 @@
     </div>
   </div>
 
-  <!-- Backtest controls -->
-  <div class="card">
-    <div class="card-title">Backtest Historique (SMC réel sur données TwelveData)</div>
-    <div class="controls-row">
-      <div class="field">
-        <label>Début</label>
-        <input type="month" id="btStart" value="2026-01">
-      </div>
-      <div class="field">
-        <label>Fin</label>
-        <input type="month" id="btEnd" value="2026-08">
-      </div>
-      <div class="field">
-        <label>Capital ($)</label>
-        <input type="number" id="capitalInput" value="1000" min="0">
-      </div>
-      <div class="field">
-        <label>Risque / trade (%)</label>
-        <input type="number" id="riskInput" value="1" min="0.1" step="0.1">
-      </div>
-      <button class="btn primary" id="runBacktestBtn">Lancer le backtest</button>
-      <button class="btn" id="exportCsvBtn">Exporter CSV</button>
-    </div>
-    <div class="bt-status" id="btStatus">Aucun backtest lancé. Choisissez une période et cliquez sur "Lancer le backtest" (consomme ~1 crédit API par mois analysé).</div>
-
-    <div id="backtestWrap" style="margin-top:14px">
-      <div class="empty">Aucune donnée de backtest pour le moment.</div>
-    </div>
-  </div>
-
-  <!-- Zones + History -->
   <div class="grid-2">
     <div class="card">
       <div class="card-title">
@@ -299,28 +271,44 @@
     </div>
 
     <div class="card">
-      <div class="card-title">Historique Live</div>
-      <div style="max-height:280px;overflow:auto">
-        <table>
-          <thead>
-            <tr><th>Date</th><th>Type</th><th>Sens</th><th>Résultat</th><th>RR</th></tr>
-          </thead>
-          <tbody id="histBody">
-            <tr><td colspan="5" class="empty">Aucun trade encore</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="card-title">Journal des Entrées</div>
+      <div class="entry-log" id="entryLog"><div class="empty">Aucune entrée touchée pour le moment</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Backtest Historique (SMC réel sur données TwelveData)</div>
+    <div class="controls-row">
+      <div class="field"><label>Début</label><input type="month" id="btStart" value="2026-01"></div>
+      <div class="field"><label>Fin</label><input type="month" id="btEnd" value="2026-08"></div>
+      <div class="field"><label>Capital ($)</label><input type="number" id="capitalInput" value="1000" min="0"></div>
+      <div class="field"><label>Risque / trade (%)</label><input type="number" id="riskInput" value="1" min="0.1" step="0.1"></div>
+      <button class="btn primary" id="runBacktestBtn">Lancer le backtest</button>
+      <button class="btn" id="exportCsvBtn">Exporter CSV</button>
+    </div>
+    <div class="bt-status" id="btStatus">Aucun backtest lancé. Chaque signal est évalué indépendamment (pas de règle "une seule position" sur la période historique — voir note ci-dessous).</div>
+    <div id="backtestWrap" style="margin-top:14px"><div class="empty">Aucune donnée de backtest pour le moment.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Historique Live</div>
+    <div style="max-height:280px;overflow:auto">
+      <table>
+        <thead><tr><th>Date</th><th>Type</th><th>Sens</th><th>Résultat</th><th>RR</th></tr></thead>
+        <tbody id="histBody"><tr><td colspan="5" class="empty">Aucun trade encore</td></tr></tbody>
+      </table>
     </div>
   </div>
 
   <p class="footer-note">
     Ares Analyse Trading — Smart Money Concepts (OB · FVG · BOS · Liquidity Sweep)<br>
-    Signal engine 100% déterministe basé sur les données réelles TwelveData (plan gratuit). Aucune donnée n'est inventée.<br>
+    Signal engine 100% déterministe basé sur les données réelles TwelveData (plan gratuit).<br>
+    En live : les 2 zones les plus fortes (Achat + Vente) sont suivies comme ordres Limit ; la première touchée devient la position active, l'autre est annulée.<br>
+    En backtest : chaque signal historique est évalué indépendamment (simplification — pas de simulation "une position à la fois" sur 8 mois).<br>
     Ceci n'est pas un conseil financier. Les performances passées ne préjugent pas des performances futures.
   </p>
 </main>
 
-<!-- TradingView Widget -->
 <script src="https://s3.tradingview.com/tv.js"></script>
 <script>
 new TradingView.widget({
@@ -353,27 +341,30 @@ const CONFIG = {
   apiKey: '718522ad18294b5a99af72d1fa5244de',
   symbol: 'XAU/USD',
   interval: '15min',
-  tickerMs: 120000,   // prix : toutes les 2 min
-  rescanMs: 600000,   // rescan SMC live : toutes les 10 min
+  tickerMs: 120000,
+  rescanMs: 600000,
   minScore: 75
 };
 
 const LS = {
-  liveHistory: 'ares_live_history_v2',
-  backtest: 'ares_backtest_v2',
+  liveHistory: 'ares_live_history_v3',
+  backtest: 'ares_backtest_v3',
   credits: 'ares_credits_v1',
-  settings: 'ares_settings_v1'
+  activeSignals: 'ares_active_signals_v1',
+  entryLog: 'ares_entry_log_v1'
 };
 
 let liveHistory = safeParse(localStorage.getItem(LS.liveHistory), []);
 let backtestData = safeParse(localStorage.getItem(LS.backtest), null);
+let prevActiveSignals = safeParse(localStorage.getItem(LS.activeSignals), []);
+let entryLog = safeParse(localStorage.getItem(LS.entryLog), []);
 let liveCandles = [];
-let activeLiveSignal = null;
 let selectedMonth = null;
 let btRunning = false;
 
-function safeParse(str, fallback) { try { return str ? JSON.parse(str) : fallback; } catch(e) { return fallback; } }
+function safeParse(str, fb) { try { return str ? JSON.parse(str) : fb; } catch(e) { return fb; } }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function round2(x) { return Math.round(x * 100) / 100; }
 
 /* ---------------- Crédits ---------------- */
 function trackCredit(n) {
@@ -392,9 +383,7 @@ function renderCredits(c) {
 /* ---------------- Statut marché ---------------- */
 function updateMarketStatus() {
   const now = new Date();
-  const day = now.getUTCDay(); // 0=dim,6=sam
-  const h = now.getUTCHours();
-  // Forex/Or : ouvert dim 22:00 UTC -> ven 22:00 UTC
+  const day = now.getUTCDay(), h = now.getUTCHours();
   let open = true;
   if (day === 6) open = false;
   else if (day === 0 && h < 22) open = false;
@@ -416,7 +405,6 @@ async function td(endpoint, params) {
   if (data.status === 'error' || data.code >= 400) throw new Error(data.message || 'Erreur API TwelveData');
   return data;
 }
-
 function toCandles(values) {
   if (!values) return [];
   return values.map(v => ({
@@ -424,26 +412,18 @@ function toCandles(values) {
     open: +v.open, high: +v.high, low: +v.low, close: +v.close
   })).sort((a,b) => a.time - b.time);
 }
-
 async function fetchMonthCandles(year, month) {
   const start = `${year}-${String(month).padStart(2,'0')}-01`;
   const lastDay = new Date(year, month, 0).getDate();
   const end = `${year}-${String(month).padStart(2,'0')}-${lastDay} 23:59:59`;
-  const data = await td('time_series', {
-    symbol: CONFIG.symbol, interval: CONFIG.interval,
-    start_date: start, end_date: end, outputsize: 5000, order: 'ASC'
-  });
+  const data = await td('time_series', { symbol: CONFIG.symbol, interval: CONFIG.interval, start_date: start, end_date: end, outputsize: 5000, order: 'ASC' });
   return toCandles(data.values);
 }
-
 async function fetchLatestCandles(n) {
   const data = await td('time_series', { symbol: CONFIG.symbol, interval: CONFIG.interval, outputsize: n, order: 'ASC' });
   return toCandles(data.values);
 }
-
-async function fetchQuote() {
-  return await td('quote', { symbol: CONFIG.symbol });
-}
+async function fetchQuote() { return await td('quote', { symbol: CONFIG.symbol }); }
 
 /* ---------------- Moteur SMC (déterministe) ---------------- */
 function findSwings(candles, lb) {
@@ -456,7 +436,6 @@ function findSwings(candles, lb) {
   }
   return { highs, lows };
 }
-
 function detectFVG(candles, i) {
   if (i < 2) return null;
   const c1 = candles[i-2], c3 = candles[i];
@@ -464,7 +443,6 @@ function detectFVG(candles, i) {
   if (c1.low > c3.high) return { type: 'bear', top: c1.low, bottom: c3.high };
   return null;
 }
-
 function findOrderBlock(candles, breakIndex, dir) {
   for (let i = breakIndex - 1; i >= Math.max(0, breakIndex - 15); i--) {
     const c = candles[i];
@@ -474,24 +452,20 @@ function findOrderBlock(candles, breakIndex, dir) {
   }
   return null;
 }
-
 function detectSweep(candles, idx, level, dir) {
   const c = candles[idx];
   if (!c) return false;
   if (dir === 'up') return c.low < level && c.close > level;
   return c.high > level && c.close < level;
 }
-
 function scanSMC(candles) {
   const { highs, lows } = findSwings(candles, 3);
   const signals = [];
   let lastHighIdx = null, lastLowIdx = null, hIdx = 0, lIdx = 0;
-
   for (let i = 7; i < candles.length; i++) {
     while (hIdx < highs.length && highs[hIdx] < i) { lastHighIdx = highs[hIdx]; hIdx++; }
     while (lIdx < lows.length && lows[lIdx] < i) { lastLowIdx = lows[lIdx]; lIdx++; }
     const c = candles[i];
-
     if (lastHighIdx != null && c.close > candles[lastHighIdx].high) {
       const ob = findOrderBlock(candles, i, 'up');
       if (ob) {
@@ -500,13 +474,10 @@ function scanSMC(candles) {
         let score = 60, parts = ['BOS', 'OB'];
         if (fvg && fvg.type === 'bull') { score += 15; parts.push('FVG'); }
         if (sweep) { score += 15; parts.unshift('SH'); }
-        if (score >= CONFIG.minScore) {
-          signals.push({ dir: 'ACHAT', index: i, time: c.time, entry: ob.high, sl: ob.low, score, type: parts.join('+') });
-        }
+        if (score >= CONFIG.minScore) signals.push({ dir: 'ACHAT', index: i, time: c.time, entry: ob.high, sl: ob.low, score, type: parts.join('+') });
       }
       lastHighIdx = null;
     }
-
     if (lastLowIdx != null && c.close < candles[lastLowIdx].low) {
       const ob = findOrderBlock(candles, i, 'down');
       if (ob) {
@@ -515,73 +486,93 @@ function scanSMC(candles) {
         let score = 60, parts = ['BOS', 'OB'];
         if (fvg && fvg.type === 'bear') { score += 15; parts.push('FVG'); }
         if (sweep) { score += 15; parts.unshift('SMS'); }
-        if (score >= CONFIG.minScore) {
-          signals.push({ dir: 'VENTE', index: i, time: c.time, entry: ob.low, sl: ob.high, score, type: parts.join('+') });
-        }
+        if (score >= CONFIG.minScore) signals.push({ dir: 'VENTE', index: i, time: c.time, entry: ob.low, sl: ob.high, score, type: parts.join('+') });
       }
       lastLowIdx = null;
     }
   }
   return signals;
 }
-
 function withLevels(sig) {
   const risk = Math.abs(sig.entry - sig.sl);
   const mul = sig.dir === 'ACHAT' ? 1 : -1;
-  return {
-    ...sig, risk,
-    tp1: +(sig.entry + mul * risk * 1).toFixed(2),
-    tp2: +(sig.entry + mul * risk * 2).toFixed(2),
-    tp3: +(sig.entry + mul * risk * 3).toFixed(2)
-  };
+  return { ...sig, risk,
+    tp1: +(sig.entry + mul*risk*1).toFixed(2),
+    tp2: +(sig.entry + mul*risk*2).toFixed(2),
+    tp3: +(sig.entry + mul*risk*3).toFixed(2) };
 }
 
+/* Simule un ordre LIMIT : attend le touch de l'entry, puis suit TP1(1/3)->TP2(1/3)->TP3(1/3),
+   avec SL qui remonte à l'entry après TP1 et à TP1 après TP2 (breakeven progressif). */
 function simulateTrade(candles, sig) {
   const s = withLevels(sig);
   const isBuy = s.dir === 'ACHAT';
-  let stage = 0, sl = s.sl;
+  let entered = false, entryTime = null, stage = 0, sl = s.sl;
+
   for (let j = s.index + 1; j < candles.length; j++) {
     const c = candles[j];
+
+    if (!entered) {
+      const touchesEntry = isBuy ? c.low <= s.entry : c.high >= s.entry;
+      const blownThrough = isBuy ? c.low <= s.sl : c.high >= s.sl;
+      if (touchesEntry) { entered = true; entryTime = c.time; }
+      else if (blownThrough) {
+        return { ...s, result: 'INVALIDÉ', rr: 0, entered: false, entryTime: null, closeTime: c.time };
+      } else { continue; }
+    }
+
     const worst = isBuy ? c.low : c.high;
     const hitSL = isBuy ? worst <= sl : worst >= sl;
     if (hitSL) {
-      const result = stage === 0 ? 'SL' : (stage === 1 ? 'BE' : 'TP1');
-      return { ...s, result, closeTime: c.time };
+      let label, rr;
+      if (stage === 0) { label = 'SL'; rr = -1; }
+      else if (stage === 1) { label = 'TP1+BE'; rr = round2(1/3*1); }
+      else { label = 'TP1+TP2+BE'; rr = round2(1/3*1 + 1/3*2); }
+      return { ...s, result: label, rr, entered: true, entryTime, closeTime: c.time };
     }
     const best = isBuy ? c.high : c.low;
     const reached = (lvl) => isBuy ? best >= lvl : best <= lvl;
     if (stage === 0 && reached(s.tp1)) { stage = 1; sl = s.entry; }
     if (stage === 1 && reached(s.tp2)) { stage = 2; sl = s.tp1; }
-    if (stage === 2 && reached(s.tp3)) return { ...s, result: 'TP3', closeTime: c.time };
+    if (stage === 2 && reached(s.tp3)) {
+      return { ...s, result: 'TP1+TP2+TP3', rr: round2(1/3*1 + 1/3*2 + 1/3*3), entered: true, entryTime, closeTime: c.time };
+    }
   }
-  return { ...s, result: stage === 0 ? 'EN COURS' : (stage === 1 ? 'TP1' : 'TP2'), closeTime: null };
+
+  if (!entered) return { ...s, result: 'EN ATTENTE', rr: null, entered: false, entryTime: null, closeTime: null };
+  const label = stage === 0 ? 'ACTIF (en cours)' : (stage === 1 ? 'TP1 (en cours)' : 'TP1+TP2 (en cours)');
+  return { ...s, result: label, rr: null, entered: true, entryTime, closeTime: null };
 }
 
 function aggregateMonthly(trades) {
   const months = {};
   trades.forEach(t => {
-    if (!t.closeTime) return;
+    if (!t.entered || !t.closeTime || t.rr === null) return;
     const d = new Date(t.time);
     const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`;
-    if (!months[key]) months[key] = { trades: 0, tp: 0, sl: 0, be: 0 };
+    if (!months[key]) months[key] = { trades: 0, tp: 0, sl: 0, be: 0, totalRR: 0 };
     months[key].trades++;
-    if (t.result.startsWith('TP')) months[key].tp++;
+    months[key].totalRR += t.rr;
+    if (t.result === 'TP1+TP2+TP3') months[key].tp++;
     else if (t.result === 'SL') months[key].sl++;
-    else if (t.result === 'BE') months[key].be++;
+    else months[key].be++;
   });
-  Object.values(months).forEach(m => m.winrate = m.trades ? Math.round(m.tp / m.trades * 100) : 0);
+  Object.values(months).forEach(m => { m.winrate = m.trades ? Math.round(m.tp / m.trades * 100) : 0; m.totalRR = round2(m.totalRR); });
   return months;
 }
-
 function monthLabel(key) {
   const [y, m] = key.split('-');
   const names = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
   return names[+m - 1] + ' ' + y;
 }
+function resultClass(r) {
+  if (r === 'SL') return 'res-sl';
+  if (r === 'TP1+TP2+TP3') return 'res-tp';
+  return 'res-be';
+}
 
 /* ---------------- Backtest runner ---------------- */
 function setStatus(msg) { document.getElementById('btStatus').textContent = msg; }
-
 async function runBacktest(sy, sm, ey, em) {
   if (btRunning) return;
   btRunning = true;
@@ -594,16 +585,16 @@ async function runBacktest(sy, sm, ey, em) {
       const candles = await fetchMonthCandles(y, m);
       all = all.concat(candles);
       m++; if (m > 12) { m = 1; y++; }
-      if (y < ey || (y === ey && m <= em)) await sleep(8000); // respecte 8 req/min
+      if (y < ey || (y === ey && m <= em)) await sleep(8000);
     }
     all.sort((a,b) => a.time - b.time);
     setStatus('Analyse SMC sur ' + all.length + ' bougies…');
     const raw = scanSMC(all);
-    const trades = raw.map(s => simulateTrade(all, s)).filter(t => t.closeTime);
+    const trades = raw.map(s => simulateTrade(all, s));
     const monthly = aggregateMonthly(trades);
-    backtestData = { trades, monthly, range: { sy, sm, ey, em }, generatedAt: Date.now() };
+    backtestData = { trades: trades.filter(t => t.entered && t.closeTime), monthly, range: { sy, sm, ey, em }, generatedAt: Date.now() };
     localStorage.setItem(LS.backtest, JSON.stringify(backtestData));
-    setStatus(`Backtest terminé — ${trades.length} trades analysés sur ${Object.keys(monthly).length} mois.`);
+    setStatus(`Backtest terminé — ${backtestData.trades.length} trades entrés et clôturés sur ${Object.keys(monthly).length} mois.`);
     selectedMonth = null;
     renderBacktest();
   } catch (e) {
@@ -613,7 +604,6 @@ async function runBacktest(sy, sm, ey, em) {
     document.getElementById('runBacktestBtn').disabled = false;
   }
 }
-
 function renderBacktest() {
   const wrap = document.getElementById('backtestWrap');
   if (!backtestData || !Object.keys(backtestData.monthly).length) {
@@ -628,22 +618,20 @@ function renderBacktest() {
     <div class="month-tabs">${tabs}</div>
     <div class="stats-grid" style="margin-top:12px">
       <div class="stat"><div class="num">${s.trades}</div><div class="lbl">Trades</div></div>
-      <div class="stat"><div class="num" style="color:var(--bull)">${s.tp}</div><div class="lbl">TP</div></div>
+      <div class="stat"><div class="num" style="color:var(--bull)">${s.tp}</div><div class="lbl">TP1+2+3</div></div>
       <div class="stat"><div class="num" style="color:var(--bear)">${s.sl}</div><div class="lbl">SL</div></div>
-      <div class="stat"><div class="num" style="color:var(--warn)">${s.be}</div><div class="lbl">BE</div></div>
+      <div class="stat"><div class="num" style="color:var(--warn)">${s.be}</div><div class="lbl">TPx+BE</div></div>
       <div class="stat"><div class="num">${s.winrate}%</div><div class="lbl">Winrate</div></div>
+      <div class="stat"><div class="num" style="color:${s.totalRR>=0?'var(--bull)':'var(--bear)'}">${s.totalRR>0?'+':''}${s.totalRR}R</div><div class="lbl">RR Total</div></div>
     </div>`;
   wrap.querySelectorAll('.month-tab').forEach(btn => {
     btn.addEventListener('click', () => { selectedMonth = btn.dataset.month; renderBacktest(); });
   });
 }
-
 function exportCsv() {
   if (!backtestData || !backtestData.trades.length) { setStatus('Rien à exporter — lancez un backtest d\'abord.'); return; }
-  const rows = [['Date','Type','Sens','Entry','SL','TP1','TP2','TP3','Résultat','Score']];
-  backtestData.trades.forEach(t => {
-    rows.push([new Date(t.time).toISOString(), t.type, t.dir, t.entry, t.sl, t.tp1, t.tp2, t.tp3, t.result, t.score]);
-  });
+  const rows = [['Date','Type','Sens','Entry','SL','TP1','TP2','TP3','Résultat','RR','Score']];
+  backtestData.trades.forEach(t => rows.push([new Date(t.time).toISOString(), t.type, t.dir, t.entry, t.sl, t.tp1, t.tp2, t.tp3, t.result, t.rr, t.score]));
   const csv = rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const a = document.createElement('a');
@@ -652,29 +640,54 @@ function exportCsv() {
   a.click();
 }
 
-/* ---------------- Live ---------------- */
+/* ---------------- Live : double signal (Achat + Vente), ordre Limit, premier touché gagne ---------------- */
 function riskSettings() {
   const capital = +document.getElementById('capitalInput').value || 0;
   const riskPct = +document.getElementById('riskInput').value || 0;
   return { capital, riskPct, riskAmount: +(capital * riskPct / 100).toFixed(2) };
 }
 
-function renderSignal() {
+function getDualSignals(candles) {
+  const raw = scanSMC(candles);
+  const buys = raw.filter(s => s.dir === 'ACHAT');
+  const sells = raw.filter(s => s.dir === 'VENTE');
+  const buySig = buys.length ? simulateTrade(candles, buys[buys.length-1]) : null;
+  const sellSig = sells.length ? simulateTrade(candles, sells[sells.length-1]) : null;
+
+  if (buySig && sellSig && buySig.entryTime && sellSig.entryTime) {
+    if (buySig.entryTime < sellSig.entryTime) { sellSig.result = 'ANNULÉ'; sellSig.cancelled = true; }
+    else if (sellSig.entryTime < buySig.entryTime) { buySig.result = 'ANNULÉ'; buySig.cancelled = true; }
+  }
+  const list = [buySig, sellSig].filter(Boolean);
+  list.sort((a,b) => b.score - a.score);
+  return list.slice(0, 2);
+}
+
+function signalStatusInfo(sig) {
+  if (sig.cancelled) return { cls: 'cancelled', label: 'Annulé — zone opposée touchée en premier' };
+  if (!sig.entered) return { cls: 'pending', label: 'En attente (ordre Limit)' };
+  if (sig.closeTime) return { cls: 'closed', label: 'Clôturé — ' + sig.result };
+  return { cls: 'active', label: 'Actif — position en cours' };
+}
+
+function renderSignal(signals) {
   const box = document.getElementById('signalBox');
-  if (!activeLiveSignal) {
+  if (!signals || !signals.length) {
     box.innerHTML = `<div class="empty">Aucun signal haute probabilité pour le moment.<br>Le moteur ne prend que les setups ≥ ${CONFIG.minScore}%.</div>`;
     document.getElementById('aiText').textContent = "En attente d'un setup SMC valide (OB, FVG, BOS, Liquidity Sweep) sur les 300 dernières bougies 15min.";
     return;
   }
-  const t = activeLiveSignal;
-  const dirClass = t.dir === 'ACHAT' ? 'buy' : 'sell';
   const rs = riskSettings();
-  box.innerHTML = `
-    <div class="signal-box">
-      <div class="signal-dir ${dirClass}">${t.dir === 'ACHAT' ? '▲ ACHAT' : '▼ VENTE'}</div>
-      <div class="signal-type">${t.type}</div>
+  box.innerHTML = signals.map(t => {
+    const dirClass = t.dir === 'ACHAT' ? 'buy' : 'sell';
+    const st = signalStatusInfo(t);
+    const rrTxt = (t.rr === null || t.rr === undefined) ? '—' : (t.rr > 0 ? '+' + t.rr + 'R' : t.rr + 'R');
+    return `
+    <div class="signal-box status-${st.cls}">
+      <span class="signal-status ${st.cls}">${st.label}</span>
+      <div class="signal-dir ${dirClass}">${t.dir === 'ACHAT' ? '▲ ACHAT (LIMIT)' : '▼ VENTE (LIMIT)'}<span class="signal-type">${t.type}</span></div>
       <div class="levels">
-        <div class="level entry"><div class="lbl">Entry</div><div class="val">${t.entry.toFixed(2)}</div></div>
+        <div class="level entry"><div class="lbl">Entry (Limit)</div><div class="val">${t.entry.toFixed(2)}</div></div>
         <div class="level sl"><div class="lbl">Stop Loss</div><div class="val">${t.sl.toFixed(2)}</div></div>
         <div class="level tp"><div class="lbl">TP1 (1R)</div><div class="val">${t.tp1.toFixed(2)}</div></div>
         <div class="level tp"><div class="lbl">TP2 (2R)</div><div class="val">${t.tp2.toFixed(2)}</div></div>
@@ -682,19 +695,23 @@ function renderSignal() {
         <div class="level"><div class="lbl">Risque</div><div class="val">${t.risk.toFixed(2)} pts</div></div>
       </div>
       <div class="meta-row">
-        <div class="meta">RR <b>1:3</b></div>
         <div class="meta">Score <b>${t.score}</b></div>
+        <div class="meta">RR réalisé <b>${rrTxt}</b></div>
         <div class="meta">Risque suggéré <b>${rs.riskAmount}$</b> (${rs.riskPct}% de ${rs.capital}$)</div>
       </div>
       <div class="prob-bar"><div class="prob-fill" style="width:${t.score}%"></div></div>
     </div>`;
+  }).join('');
+
+  const primary = signals.find(s => s.entered && !s.closeTime) || signals[0];
   const aiTexts = {
     'SH': "Stop Hunt suivi d'un Break of Structure et retour sur Order Block. Setup institutionnel classique.",
     'SMS': "Failure Swing + Break of Structure + retour. Bonne confluence détectée.",
     'BOS': "Break of Structure confirmé avec Order Block et Fair Value Gap alignés."
   };
-  const key = Object.keys(aiTexts).find(k => t.type.startsWith(k));
-  document.getElementById('aiText').textContent = aiTexts[key] || "Setup SMC haute confluence détecté sur données réelles. Respectez le plan TP1→TP2→TP3.";
+  const key = Object.keys(aiTexts).find(k => primary.type.startsWith(k));
+  document.getElementById('aiText').textContent = (aiTexts[key] || "Setup SMC haute confluence détecté sur données réelles.") +
+    (signals.length === 2 ? " Deux zones surveillées simultanément (Achat + Vente) — la première touchée devient la position active." : "");
 }
 
 function renderZonesFromCandles(candles) {
@@ -715,43 +732,65 @@ function renderZonesFromCandles(candles) {
   if (!top.length) { list.innerHTML = '<div class="empty">Aucune zone détectée</div>'; return; }
   list.innerHTML = top.map(z => `
     <div class="zone ${z.dir}">
-      <div class="z-info">
-        <div class="z-type">${z.type} · ${z.dir === 'bull' ? 'Haussier' : 'Baissier'}</div>
-        <div class="z-price">${z.price.toFixed(2)}</div>
-      </div>
+      <div class="z-info"><div class="z-type">${z.type} · ${z.dir === 'bull' ? 'Haussier' : 'Baissier'}</div><div class="z-price">${z.price.toFixed(2)}</div></div>
       <div class="z-score">${z.score}%</div>
+    </div>`).join('');
+}
+
+function renderEntryLog() {
+  const el = document.getElementById('entryLog');
+  if (!entryLog.length) { el.innerHTML = '<div class="empty">Aucune entrée touchée pour le moment</div>'; return; }
+  el.innerHTML = entryLog.slice(0, 30).map(e => `
+    <div class="entry-log-item">
+      <span><span class="el-dir ${e.dir==='ACHAT'?'buy':'sell'}">${e.dir}</span> touché @ ${e.entry.toFixed(2)} <span style="color:var(--muted)">(${e.type})</span></span>
+      <span class="el-time">${new Date(e.time).toLocaleDateString()} ${new Date(e.time).toLocaleTimeString().slice(0,5)}</span>
     </div>`).join('');
 }
 
 function renderHistory() {
   const body = document.getElementById('histBody');
   if (!liveHistory.length) { body.innerHTML = '<tr><td colspan="5" class="empty">Aucun trade encore</td></tr>'; return; }
-  body.innerHTML = liveHistory.slice(0, 30).map(h => {
-    const cls = h.result.startsWith('TP') ? 'res-tp' : (h.result === 'SL' ? 'res-sl' : 'res-be');
-    return `<tr>
+  body.innerHTML = liveHistory.slice(0, 30).map(h => `
+    <tr>
       <td>${new Date(h.time).toLocaleDateString()} ${new Date(h.time).toLocaleTimeString().slice(0,5)}</td>
       <td>${h.type}</td><td>${h.dir}</td>
-      <td class="${cls}">${h.result}</td>
-      <td>${h.rr > 0 ? '+' + h.rr : h.rr}</td>
-    </tr>`;
-  }).join('');
+      <td class="${resultClass(h.result)}">${h.result}</td>
+      <td>${h.rr > 0 ? '+' + h.rr : h.rr}R</td>
+    </tr>`).join('');
 }
 
 function logLiveTrade(t) {
-  if (liveHistory.some(h => h.time === t.time)) return;
-  const rrMap = { TP1: 1, TP2: 2, TP3: 3, SL: -1, BE: 0 };
-  liveHistory.unshift({ time: t.time, type: t.type, dir: t.dir, result: t.result, rr: rrMap[t.result] ?? 0 });
+  if (liveHistory.some(h => h.time === t.time && h.dir === t.dir)) return;
+  liveHistory.unshift({ time: t.time, type: t.type, dir: t.dir, result: t.result, rr: t.rr });
   liveHistory = liveHistory.slice(0, 100);
   localStorage.setItem(LS.liveHistory, JSON.stringify(liveHistory));
   renderHistory();
 }
 
+function checkNewEntries(newSignals) {
+  newSignals.forEach(sig => {
+    const key = sig.dir + '_' + sig.time;
+    const prev = prevActiveSignals.find(p => (p.dir + '_' + p.time) === key);
+    const wasEntered = prev && prev.entered;
+    if (sig.entered && !wasEntered) {
+      entryLog.unshift({ time: sig.entryTime, dir: sig.dir, entry: sig.entry, type: sig.type });
+      entryLog = entryLog.slice(0, 50);
+      localStorage.setItem(LS.entryLog, JSON.stringify(entryLog));
+    }
+    if (sig.closeTime && sig.entered) {
+      const wasClosed = prev && prev.closeTime;
+      if (!wasClosed) logLiveTrade(sig);
+    }
+  });
+  prevActiveSignals = newSignals.map(s => ({ dir: s.dir, time: s.time, entered: s.entered, closeTime: s.closeTime }));
+  localStorage.setItem(LS.activeSignals, JSON.stringify(prevActiveSignals));
+  renderEntryLog();
+}
+
 async function refreshTicker() {
   try {
     const q = await fetchQuote();
-    const price = +q.close;
-    const change = +q.change;
-    const pct = +q.percent_change;
+    const price = +q.close, change = +q.change, pct = +q.percent_change;
     document.getElementById('tickerPrice').textContent = price.toFixed(2);
     const chEl = document.getElementById('tickerChange');
     const sign = change > 0 ? '+' : '';
@@ -769,17 +808,10 @@ async function refreshTicker() {
 async function rescanLive() {
   try {
     liveCandles = await fetchLatestCandles(300);
-    const signals = scanSMC(liveCandles);
-    if (signals.length) {
-      const last = signals[signals.length - 1];
-      const sim = simulateTrade(liveCandles, last);
-      if (!sim.closeTime) { activeLiveSignal = sim; }
-      else { activeLiveSignal = null; logLiveTrade(sim); }
-    } else {
-      activeLiveSignal = null;
-    }
+    const signals = getDualSignals(liveCandles);
+    checkNewEntries(signals);
     renderZonesFromCandles(liveCandles);
-    renderSignal();
+    renderSignal(signals);
   } catch (e) {
     document.getElementById('signalBox').innerHTML = `<div class="empty">Erreur API : ${e.message}</div>`;
   }
@@ -796,14 +828,14 @@ document.getElementById('runBacktestBtn').addEventListener('click', () => {
   runBacktest(sy, sm, ey, em);
 });
 document.getElementById('exportCsvBtn').addEventListener('click', exportCsv);
-document.getElementById('capitalInput').addEventListener('change', renderSignal);
-document.getElementById('riskInput').addEventListener('change', renderSignal);
+document.getElementById('capitalInput').addEventListener('change', () => rescanLive());
+document.getElementById('riskInput').addEventListener('change', () => rescanLive());
 
 renderCredits();
 updateMarketStatus();
 renderHistory();
+renderEntryLog();
 renderBacktest();
-renderSignal();
 refreshTicker();
 rescanLive();
 setInterval(refreshTicker, CONFIG.tickerMs);
