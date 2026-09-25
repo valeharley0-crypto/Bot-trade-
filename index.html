@@ -472,17 +472,21 @@ const CONFIG = {
   tfLabel: 'M15',
   tickerMs: 120000,
   rescanMs: 600000,
-  /* === SMC COMPLET — setup assuré uniquement === */
-  minScore: 88,
-  highConfScore: 95,
+  /* === SMC ASSURÉ — filtres stricts (qualité > quantité) === */
+  minScore: 93,           // relevé : setups faibles exclus
+  highConfScore: 98,      // TP3 seulement ultra-fort
   preferSessions: true,
   requireOB: true,
   requireStructure: true,
-  minConfCount: 2,
-  maxRiskPts: 150,
-  htfAlignBonus: 10,      // +10 si LTF aligné M30
-  slBuffer: 1.5,          // pts au-delà liquidité / OB
-  minOppositeDist: 50     // 2e signal inverse seulement si zone > 50 pts
+  requireSweep: true,     // SH/SMS obligatoire
+  requireDispOrFVG: true, // Displacement OU FVG obligatoire
+  minConfCount: 3,        // min 3 confluences
+  maxRiskPts: 10,         // SL max 10 pts XAU
+  htfAlignBonus: 12,
+  htfAgainstPenalty: 20,  // contre H1 = presque jamais affiché
+  slBuffer: 1.5,
+  minOppositeDist: 80,
+  onlyBestSignal: true    // 1 signal max : le plus fort
 };
 
 const LS = {
@@ -927,6 +931,16 @@ function strongOB(ob, candles, breakIdx) {
   const avgBody = recent.reduce((s, c) => s + Math.abs(c.close - c.open), 0) / (recent.length || 1);
   return ob.body >= avgBody * 0.8;
 }
+/* OB encore "frais" : pas de close complet de l'autre côté entre OB et le BOS */
+function isOBFresh(candles, ob, breakIdx, dir) {
+  if (!ob) return false;
+  for (let j = ob.index + 1; j < breakIdx; j++) {
+    const c = candles[j];
+    if (dir === 'up' && c.close < ob.low) return false;   // mitigé baissier
+    if (dir === 'down' && c.close > ob.high) return false;
+  }
+  return true;
+}
 
 function scanSMC(candles, tfLabel) {
   const tf = tfLabel || CONFIG.tfLabel;
@@ -966,21 +980,29 @@ function scanSMC(candles, tfLabel) {
         const sl = +(slRaw - CONFIG.slBuffer).toFixed(2);
         const riskPts = +(entry - sl).toFixed(2);
 
-        let score = 50;
-        const parts = ['BOS', 'OB'];
-        score += 18;
-        if (hasSweep) { score += 18; parts.unshift('SH'); }
-        if (hasFVG)   { score += 14; parts.push('FVG'); }
-        if (ote)      { score += 12; parts.push('OTE'); }
-        if (sess)     { score += 8;  parts.push('SESS'); }
-        if (disc)     { score += 6;  parts.push('DISC'); }
-        if (strong)   { score += 5;  parts.push('OB+'); }
         const disp = hasDisplacement(candles, i, 'up');
         const vol = hasVolumeSpike(candles, i, 20);
-        if (disp) { score += 10; parts.push('DISP'); }
-        if (vol)  { score += 8;  parts.push('VOL'); }
+        const fresh = isOBFresh(candles, ob, i, 'up');
 
-        const confCount = (hasSweep ? 1 : 0) + (hasFVG ? 1 : 0) + (ote ? 1 : 0) + (sess ? 1 : 0) + (disp ? 1 : 0);
+        // Filtres durs — setup ASSURÉ uniquement
+        if (CONFIG.requireSweep && !hasSweep) { lastHighIdx = null; continue; }
+        if (CONFIG.requireDispOrFVG && !(disp || hasFVG)) { lastHighIdx = null; continue; }
+        if (!fresh) { lastHighIdx = null; continue; }
+
+        let score = 48;
+        const parts = ['BOS', 'OB'];
+        score += 16;
+        if (hasSweep) { score += 22; parts.unshift('SH'); }
+        if (hasFVG)   { score += 14; parts.push('FVG'); }
+        if (ote)      { score += 12; parts.push('OTE'); }
+        if (sess)     { score += 10; parts.push('SESS'); }
+        if (disc)     { score += 6;  parts.push('DISC'); }
+        if (strong)   { score += 8;  parts.push('OB+'); }
+        if (disp)     { score += 12; parts.push('DISP'); }
+        if (vol)      { score += 8;  parts.push('VOL'); }
+        if (fresh)    { score += 4; }
+
+        const confCount = (hasSweep?1:0)+(hasFVG?1:0)+(ote?1:0)+(sess?1:0)+(disp?1:0)+(strong?1:0);
         const riskOk = riskPts > 0 && riskPts <= CONFIG.maxRiskPts;
 
         if (score >= CONFIG.minScore && confCount >= CONFIG.minConfCount && riskOk) {
@@ -1021,21 +1043,28 @@ function scanSMC(candles, tfLabel) {
         const sl = +(slRaw + CONFIG.slBuffer).toFixed(2);
         const riskPts = +(sl - entry).toFixed(2);
 
-        let score = 50;
-        const parts = ['BOS', 'OB'];
-        score += 18;
-        if (hasSweep) { score += 18; parts.unshift('SMS'); }
-        if (hasFVG)   { score += 14; parts.push('FVG'); }
-        if (ote)      { score += 12; parts.push('OTE'); }
-        if (sess)     { score += 8;  parts.push('SESS'); }
-        if (prem)     { score += 6;  parts.push('PREM'); }
-        if (strong)   { score += 5;  parts.push('OB+'); }
         const disp = hasDisplacement(candles, i, 'down');
         const vol = hasVolumeSpike(candles, i, 20);
-        if (disp) { score += 10; parts.push('DISP'); }
-        if (vol)  { score += 8;  parts.push('VOL'); }
+        const fresh = isOBFresh(candles, ob, i, 'down');
 
-        const confCount = (hasSweep ? 1 : 0) + (hasFVG ? 1 : 0) + (ote ? 1 : 0) + (sess ? 1 : 0) + (disp ? 1 : 0);
+        if (CONFIG.requireSweep && !hasSweep) { lastLowIdx = null; continue; }
+        if (CONFIG.requireDispOrFVG && !(disp || hasFVG)) { lastLowIdx = null; continue; }
+        if (!fresh) { lastLowIdx = null; continue; }
+
+        let score = 48;
+        const parts = ['BOS', 'OB'];
+        score += 16;
+        if (hasSweep) { score += 22; parts.unshift('SMS'); }
+        if (hasFVG)   { score += 14; parts.push('FVG'); }
+        if (ote)      { score += 12; parts.push('OTE'); }
+        if (sess)     { score += 10; parts.push('SESS'); }
+        if (prem)     { score += 6;  parts.push('PREM'); }
+        if (strong)   { score += 8;  parts.push('OB+'); }
+        if (disp)     { score += 12; parts.push('DISP'); }
+        if (vol)      { score += 8;  parts.push('VOL'); }
+        if (fresh)    { score += 4; }
+
+        const confCount = (hasSweep?1:0)+(hasFVG?1:0)+(ote?1:0)+(sess?1:0)+(disp?1:0)+(strong?1:0);
         const riskOk = riskPts > 0 && riskPts <= CONFIG.maxRiskPts;
 
         if (score >= CONFIG.minScore && confCount >= CONFIG.minConfCount && riskOk) {
@@ -1257,9 +1286,9 @@ function scanAllTF(candlesByTF) {
         s.score += CONFIG.htfAlignBonus;
         if (!s.type.includes('HTF')) s.type = s.type + '+HTF';
         s.htfAlign = true;
-      } else if (htfBias && s.dir !== htfBias && (tf.label === 'M5' || tf.label === 'M15')) {
-        // Contre HTF sur LTF → pénalité (moins assuré)
-        s.score -= 12;
+      } else if (htfBias && s.dir !== htfBias) {
+        s.score -= (CONFIG.htfAgainstPenalty || 20);
+        s.againstHTF = true;
       }
       // Bonus TF supérieur (H1/M30 un peu plus de poids structurel)
       if (tf.label === 'H1') s.score += 6;
@@ -1302,15 +1331,17 @@ function getAllSimSignals(candlesByTF) {
 }
 
 function getDualSignals(candlesByTF) {
-  // Garder visible : pending, zone touchée, TP partiels. Retirer seulement SL / INVALIDÉ / TP final
   const list = getAllSimSignals(candlesByTF).filter(s => {
     if (s.cancelled) return false;
+    if (s.againstHTF) return false; // jamais contre H1/M30
+    if (s.score < CONFIG.minScore) return false;
     if (s.result === 'SL' || s.result === 'INVALIDÉ') return false;
     if (s.closeTime && (s.result === 'TP1+TP2' || s.result === 'TP1+TP2+TP3' || s.result === 'TP1+BE' || s.result === 'TP1+TP2+BE')) return false;
     return true;
   });
   list.sort((a, b) => b.score - a.score);
-  // Max 1 signal, ou 2 si zones lointaines (déjà filtré)
+  // Un seul signal : le plus assuré tous TF confondus
+  if (CONFIG.onlyBestSignal) return list.slice(0, 1);
   return list.slice(0, 2);
 }
 
@@ -1326,7 +1357,7 @@ function signalStatusInfo(sig) {
 function renderSignal(signals) {
   const box = document.getElementById('signalBox');
   if (!signals || !signals.length) {
-    box.innerHTML = `<div class="empty">Aucun setup SMC assuré pour le moment.<br>Critères : BOS + Order Block + ≥${CONFIG.minConfCount} confluences (FVG / SH / OTE / Session) · Score ≥ ${CONFIG.minScore}</div>`;
+    box.innerHTML = `<div class="empty">Aucun setup SMC assuré pour le moment.<br>Setup ASSURÉ uniquement : BOS+OB+SH/SMS + (FVG ou DISP) · ≥${CONFIG.minConfCount} conf · Score ≥ ${CONFIG.minScore} · aligné HTF</div>`;
     document.getElementById('aiText').textContent = "En attente d'un setup SMC COMPLET (BOS + OB + FVG/Liquidity/OTE/Session) sur les 300 dernières bougies " + CONFIG.tfLabel + ".";
     return;
   }
