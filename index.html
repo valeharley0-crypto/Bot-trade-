@@ -213,7 +213,7 @@
     <div class="logo">A</div>
     <div>
       <h1>Ares Analyse Trading</h1>
-      <span>SMC v2 (PDF) · SH/SMS+BMS+RTO · TP2 prioritaires</span>
+      <span>SMC Complet · OB + BOS + FVG/SH/OTE · Setup assuré</span>
     </div>
   </div>
   <div class="live-badge">
@@ -246,7 +246,7 @@
     </div>
 
     <div class="card">
-      <div class="card-title">Signaux Actifs — SH/SMS + BMS + RTO (max 2, score ≥ 85)</div>
+      <div class="card-title">Signaux Actifs — SMC Complet (BOS + OB + confluences, score ≥ 88)</div>
       <div class="dual-signals" id="signalBox">
         <div class="empty">Connexion à l'API…</div>
       </div>
@@ -301,9 +301,9 @@
   </div>
 
   <p class="footer-note">
-    Ares Analyse Trading v2 — SMC (Wade FX PDF) : SH/SMS + BMS + RTO ± OTE ± Session London/NY<br>
-    Score min 85 · Confluence ≥1 obligatoire · TP principal = TP2 · TP3 uniquement si score ≥ 92<br>
-    Signal engine 100% déterministe (TwelveData). Live : 2 zones max, premier touché gagne.<br>
+    Ares Analyse Trading v3 — SMC COMPLET (Wade FX PDF + ICT) : BOS + Order Block + FVG + Liquidity + OTE + Session<br>
+    Score min 88 · OB obligatoire · Confluence ≥2 · TP2 prioritaire · TP3 si score ≥ 95 · TF affiché · SL → signal retiré<br>
+    Setup assuré uniquement (structure + OB + confluences). Live : 2 zones max, premier touché gagne.<br>
     Backtest : chaque signal évalué indépendamment. Ceci n'est pas un conseil financier.
   </p>
 </main>
@@ -340,19 +340,25 @@ const CONFIG = {
   apiKey: '718522ad18294b5a99af72d1fa5244de',
   symbol: 'XAU/USD',
   interval: '15min',
+  tfLabel: 'M15',
   tickerMs: 120000,
   rescanMs: 600000,
-  minScore: 85,          // relevé pour winrate ≥50% (PDF: confluence ≥2)
-  highConfScore: 92,     // score minimal pour autoriser TP3
-  preferSessions: true   // prioriser London / NY open (PDF ch.5)
+  /* === SMC COMPLET — setup assuré uniquement === */
+  minScore: 88,           // OB + Structure + confluences
+  highConfScore: 95,      // TP3 si très haute confluence
+  preferSessions: true,
+  requireOB: true,        // Order Block obligatoire (cœur SMC)
+  requireStructure: true, // BOS/BMS obligatoire
+  minConfCount: 2,        // min 2 parmi Sweep / FVG / OTE / Session
+  maxRiskPts: 120         // XAU : SL trop large = rejeté
 };
 
 const LS = {
-  liveHistory: 'ares_live_history_v4',
-  backtest: 'ares_backtest_v4',
+  liveHistory: 'ares_live_history_v6',
+  backtest: 'ares_backtest_v6',
   credits: 'ares_credits_v1',
-  activeSignals: 'ares_active_signals_v4',
-  entryLog: 'ares_entry_log_v4'
+  activeSignals: 'ares_active_signals_v6',
+  entryLog: 'ares_entry_log_v6'
 };
 
 let liveHistory = safeParse(localStorage.getItem(LS.liveHistory), []);
@@ -426,14 +432,14 @@ async function fetchLatestCandles(n) {
 }
 async function fetchQuote() { return await td('quote', { symbol: CONFIG.symbol }); }
 
-/* ---------------- Moteur SMC renforcé (PDF Wade FX + confluence) ---------------- */
-/* Concepts PDF intégrés :
-   - BMS (BOS) + Order Block (RTO) obligatoire
-   - SH / SMS (Stop Hunt / Failure Swing) = +20
-   - FVG / OTE zone = +15
-   - Session London / NY open = +8
-   - minScore 85 → winrate cible ≥ 50 %
-   - TP3 uniquement si score ≥ highConfScore (92)  */
+/* ================================================================
+   MOTEUR SMC COMPLET (Wade FX PDF + ICT core)
+   Éléments obligatoires pour setup ASSURÉ :
+     1. Structure  → BOS / BMS (break of swing)
+     2. Order Block → dernière bougie opposée avant l'impulsion (OB)
+     3. ≥2 confluences parmi : Liquidity Sweep (SH/SMS), FVG, OTE, Session
+   Optionnels boost score : Premium/Discount, body strength OB
+   ================================================================ */
 
 function findSwings(candles, lb) {
   const highs = [], lows = [];
@@ -445,37 +451,68 @@ function findSwings(candles, lb) {
   }
   return { highs, lows };
 }
+
+/* FVG = imbalance 3 bougies (gap entre bougie 1 et 3) */
 function detectFVG(candles, i) {
   if (i < 2) return null;
-  const c1 = candles[i-2], c3 = candles[i];
+  const c1 = candles[i - 2], c3 = candles[i];
   if (c1.high < c3.low) return { type: 'bull', top: c3.low, bottom: c1.high };
   if (c1.low > c3.high) return { type: 'bear', top: c1.low, bottom: c3.high };
   return null;
 }
-function findOrderBlock(candles, breakIndex, dir) {
-  for (let i = breakIndex - 1; i >= Math.max(0, breakIndex - 20); i--) {
-    const c = candles[i];
-    const bull = c.close > c.open;
-    if (dir === 'up' && !bull) return { index: i, high: c.high, low: c.low };
-    if (dir === 'down' && bull) return { index: i, high: c.high, low: c.low };
+
+/* FVG proche de l'OB (dans les 8 bougies autour) */
+function fvgNearOB(candles, obIdx, dir) {
+  for (let k = Math.max(2, obIdx - 2); k <= Math.min(candles.length - 1, obIdx + 8); k++) {
+    const f = detectFVG(candles, k);
+    if (!f) continue;
+    if (dir === 'up' && f.type === 'bull') return f;
+    if (dir === 'down' && f.type === 'bear') return f;
   }
   return null;
 }
-function detectSweep(candles, idx, level, dir) {
-  const c = candles[idx];
-  if (!c) return false;
-  if (dir === 'up') return c.low < level && c.close > level;
-  return c.high > level && c.close < level;
+
+/* Order Block = dernière bougie opposée AVANT l'impulsion qui a cassé la structure.
+   Bullish OB = dernière bougie baissière avant le move up.
+   Bearish OB = dernière bougie haussière avant le move down.
+   On prend celle avec le plus gros body dans la fenêtre (qualité). */
+function findOrderBlock(candles, breakIndex, dir) {
+  let best = null, bestBody = 0;
+  const start = Math.max(0, breakIndex - 25);
+  for (let i = breakIndex - 1; i >= start; i--) {
+    const c = candles[i];
+    const body = Math.abs(c.close - c.open);
+    const isBull = c.close > c.open;
+    if (dir === 'up' && !isBull && body >= bestBody) {
+      bestBody = body;
+      best = { index: i, high: c.high, low: c.low, open: c.open, close: c.close, body };
+    }
+    if (dir === 'down' && isBull && body >= bestBody) {
+      bestBody = body;
+      best = { index: i, high: c.high, low: c.low, open: c.open, close: c.close, body };
+    }
+  }
+  return best;
 }
-/* Session London (07-11 UTC) / NY (12-16 UTC) — PDF ch.5 */
+
+/* Liquidity Sweep / Stop Hunt : mèche sous (ou sur) un swing puis close de retour */
+function detectSweep(candles, idx, level, dir) {
+  if (idx < 0 || idx >= candles.length) return false;
+  const c = candles[idx];
+  if (dir === 'up') return c.low < level && c.close > level;   // SSL swept
+  return c.high > level && c.close < level;                   // BSL swept
+}
+
+/* Session London (07-11 UTC) / New York (12-16 UTC) */
 function isPrimeSession(ts) {
   const h = new Date(ts).getUTCHours();
   return (h >= 7 && h <= 11) || (h >= 12 && h <= 16);
 }
-/* OTE approx : retracement 0.62-0.79 de l'impulsion qui a créé le BOS */
+
+/* OTE 0.62–0.79 de l'impulsion qui a créé le BOS (PDF Fib Optimal Trade Entry) */
 function inOTE(candles, breakIdx, ob, dir) {
   if (breakIdx < 5) return false;
-  const impulse = candles.slice(Math.max(0, breakIdx - 12), breakIdx + 1);
+  const impulse = candles.slice(Math.max(0, breakIdx - 15), breakIdx + 1);
   const hi = Math.max(...impulse.map(c => c.high));
   const lo = Math.min(...impulse.map(c => c.low));
   const range = hi - lo;
@@ -484,69 +521,129 @@ function inOTE(candles, breakIdx, ob, dir) {
   if (dir === 'up') {
     const retr = (hi - mid) / range;
     return retr >= 0.55 && retr <= 0.85;
-  } else {
-    const retr = (mid - lo) / range;
-    return retr >= 0.55 && retr <= 0.85;
   }
+  const retr = (mid - lo) / range;
+  return retr >= 0.55 && retr <= 0.85;
 }
+
+/* Premium / Discount : OB dans la moitié favorable du range récent */
+function inDiscountPremium(candles, breakIdx, ob, dir) {
+  const look = candles.slice(Math.max(0, breakIdx - 40), breakIdx + 1);
+  if (look.length < 10) return false;
+  const hi = Math.max(...look.map(c => c.high));
+  const lo = Math.min(...look.map(c => c.low));
+  const mid = (hi + lo) / 2;
+  const obMid = (ob.high + ob.low) / 2;
+  if (dir === 'up') return obMid <= mid;   // Discount pour achat
+  return obMid >= mid;                     // Premium pour vente
+}
+
+/* Corps de l'OB suffisamment significatif (qualité institutionnelle) */
+function strongOB(ob, candles, breakIdx) {
+  if (!ob || !ob.body) return false;
+  const recent = candles.slice(Math.max(0, breakIdx - 20), breakIdx);
+  const avgBody = recent.reduce((s, c) => s + Math.abs(c.close - c.open), 0) / (recent.length || 1);
+  return ob.body >= avgBody * 0.8;
+}
+
 function scanSMC(candles) {
   const { highs, lows } = findSwings(candles, 3);
   const signals = [];
   let lastHighIdx = null, lastLowIdx = null, hIdx = 0, lIdx = 0;
-  for (let i = 7; i < candles.length; i++) {
+
+  for (let i = 8; i < candles.length; i++) {
     while (hIdx < highs.length && highs[hIdx] < i) { lastHighIdx = highs[hIdx]; hIdx++; }
     while (lIdx < lows.length && lows[lIdx] < i) { lastLowIdx = lows[lIdx]; lIdx++; }
     const c = candles[i];
 
-    /* --- ACHAT : BMS haussier + RTO sur OB (PDF SH/SMS + BMS + RTO) --- */
+    /* ========== ACHAT : BOS haussier + OB (RTO) + confluences SMC ========== */
     if (lastHighIdx != null && c.close > candles[lastHighIdx].high) {
       const ob = findOrderBlock(candles, i, 'up');
       if (ob) {
-        const fvg = detectFVG(candles, i) || detectFVG(candles, i-1);
-        const sweep = lastLowIdx != null ? detectSweep(candles, i-1, candles[lastLowIdx].low, 'up') : false;
+        const riskPts = +(ob.high - ob.low).toFixed(2);
+        const fvg = fvgNearOB(candles, ob.index, 'up') || detectFVG(candles, i) || detectFVG(candles, i - 1);
+        const hasFVG = !!(fvg && fvg.type === 'bull');
+        const sweep = lastLowIdx != null ? detectSweep(candles, i - 1, candles[lastLowIdx].low, 'up') : false;
+        // aussi checker 2-3 bougies avant le break
+        const sweep2 = lastLowIdx != null && !sweep
+          ? detectSweep(candles, i - 2, candles[lastLowIdx].low, 'up') || detectSweep(candles, i - 3, candles[lastLowIdx].low, 'up')
+          : false;
+        const hasSweep = sweep || sweep2;
         const ote = inOTE(candles, i, ob, 'up');
         const sess = isPrimeSession(c.time);
+        const disc = inDiscountPremium(candles, i, ob, 'up');
+        const strong = strongOB(ob, candles, i);
 
-        let score = 55, parts = ['BMS', 'RTO'];
-        if (sweep) { score += 20; parts.unshift('SH'); }
-        if (fvg && fvg.type === 'bull') { score += 12; parts.push('FVG'); }
-        if (ote) { score += 10; parts.push('OTE'); }
-        if (sess) { score += 8; parts.push('SESS'); }
+        // Score SMC complet
+        let score = 50;
+        const parts = [];
+        parts.push('BOS');           // structure
+        parts.push('OB');            // Order Block (cœur)
+        score += 18;                 // base structure + OB
 
-        // PDF : minimum 2 facteurs de confluence
-        const confCount = (sweep ? 1 : 0) + (fvg ? 1 : 0) + (ote ? 1 : 0) + (sess ? 1 : 0);
-        if (score >= CONFIG.minScore && confCount >= 1) {
+        if (hasSweep) { score += 18; parts.unshift('SH'); }
+        if (hasFVG)   { score += 14; parts.push('FVG'); }
+        if (ote)      { score += 12; parts.push('OTE'); }
+        if (sess)     { score += 8;  parts.push('SESS'); }
+        if (disc)     { score += 6;  parts.push('DISC'); }
+        if (strong)   { score += 5;  parts.push('OB+'); }
+
+        const confCount = (hasSweep ? 1 : 0) + (hasFVG ? 1 : 0) + (ote ? 1 : 0) + (sess ? 1 : 0);
+        const riskOk = riskPts > 0 && riskPts <= CONFIG.maxRiskPts;
+
+        if (score >= CONFIG.minScore && confCount >= CONFIG.minConfCount && riskOk) {
           signals.push({
-            dir: 'ACHAT', index: i, time: c.time,
-            entry: +(ob.high).toFixed(2), sl: +(ob.low).toFixed(2),
-            score, type: parts.join('+'), confCount
+            dir: 'ACHAT', index: i, time: c.time, tf: CONFIG.tfLabel,
+            entry: +ob.high.toFixed(2),
+            sl: +ob.low.toFixed(2),
+            score, type: parts.join('+'), confCount,
+            obIndex: ob.index, riskPts
           });
         }
       }
       lastHighIdx = null;
     }
 
-    /* --- VENTE : BMS baissier + RTO --- */
+    /* ========== VENTE : BOS baissier + OB + confluences SMC ========== */
     if (lastLowIdx != null && c.close < candles[lastLowIdx].low) {
       const ob = findOrderBlock(candles, i, 'down');
       if (ob) {
-        const fvg = detectFVG(candles, i) || detectFVG(candles, i-1);
-        const sweep = lastHighIdx != null ? detectSweep(candles, i-1, candles[lastHighIdx].high, 'down') : false;
+        const riskPts = +(ob.high - ob.low).toFixed(2);
+        const fvg = fvgNearOB(candles, ob.index, 'down') || detectFVG(candles, i) || detectFVG(candles, i - 1);
+        const hasFVG = !!(fvg && fvg.type === 'bear');
+        const sweep = lastHighIdx != null ? detectSweep(candles, i - 1, candles[lastHighIdx].high, 'down') : false;
+        const sweep2 = lastHighIdx != null && !sweep
+          ? detectSweep(candles, i - 2, candles[lastHighIdx].high, 'down') || detectSweep(candles, i - 3, candles[lastHighIdx].high, 'down')
+          : false;
+        const hasSweep = sweep || sweep2;
         const ote = inOTE(candles, i, ob, 'down');
         const sess = isPrimeSession(c.time);
+        const prem = inDiscountPremium(candles, i, ob, 'down');
+        const strong = strongOB(ob, candles, i);
 
-        let score = 55, parts = ['BMS', 'RTO'];
-        if (sweep) { score += 20; parts.unshift('SMS'); }
-        if (fvg && fvg.type === 'bear') { score += 12; parts.push('FVG'); }
-        if (ote) { score += 10; parts.push('OTE'); }
-        if (sess) { score += 8; parts.push('SESS'); }
+        let score = 50;
+        const parts = [];
+        parts.push('BOS');
+        parts.push('OB');
+        score += 18;
 
-        const confCount = (sweep ? 1 : 0) + (fvg ? 1 : 0) + (ote ? 1 : 0) + (sess ? 1 : 0);
-        if (score >= CONFIG.minScore && confCount >= 1) {
+        if (hasSweep) { score += 18; parts.unshift('SMS'); }
+        if (hasFVG)   { score += 14; parts.push('FVG'); }
+        if (ote)      { score += 12; parts.push('OTE'); }
+        if (sess)     { score += 8;  parts.push('SESS'); }
+        if (prem)     { score += 6;  parts.push('PREM'); }
+        if (strong)   { score += 5;  parts.push('OB+'); }
+
+        const confCount = (hasSweep ? 1 : 0) + (hasFVG ? 1 : 0) + (ote ? 1 : 0) + (sess ? 1 : 0);
+        const riskOk = riskPts > 0 && riskPts <= CONFIG.maxRiskPts;
+
+        if (score >= CONFIG.minScore && confCount >= CONFIG.minConfCount && riskOk) {
           signals.push({
-            dir: 'VENTE', index: i, time: c.time,
-            entry: +(ob.low).toFixed(2), sl: +(ob.high).toFixed(2),
-            score, type: parts.join('+'), confCount
+            dir: 'VENTE', index: i, time: c.time, tf: CONFIG.tfLabel,
+            entry: +ob.low.toFixed(2),
+            sl: +ob.high.toFixed(2),
+            score, type: parts.join('+'), confCount,
+            obIndex: ob.index, riskPts
           });
         }
       }
@@ -569,7 +666,7 @@ function withLevels(sig) {
   };
 }
 
-/* Simulation LIMIT : TP1 (1/2) → TP2 (1/2). TP3 seulement si allowTP3 (score ≥ 92).
+/* Simulation LIMIT : TP1 (1/2) → TP2 (1/2). TP3 seulement si allowTP3 (score ≥ highConfScore).
    SL remonte à entry après TP1, à TP1 après TP2. */
 function simulateTrade(candles, sig) {
   const s = withLevels(sig);
@@ -725,7 +822,7 @@ function riskSettings() {
   return { capital, riskPct, riskAmount: +(capital * riskPct / 100).toFixed(2) };
 }
 
-function getDualSignals(candles) {
+function getAllSimSignals(candles) {
   const raw = scanSMC(candles);
   const buys = raw.filter(s => s.dir === 'ACHAT');
   const sells = raw.filter(s => s.dir === 'VENTE');
@@ -736,7 +833,17 @@ function getDualSignals(candles) {
     if (buySig.entryTime < sellSig.entryTime) { sellSig.result = 'ANNULÉ'; sellSig.cancelled = true; }
     else if (sellSig.entryTime < buySig.entryTime) { buySig.result = 'ANNULÉ'; buySig.cancelled = true; }
   }
-  const list = [buySig, sellSig].filter(Boolean);
+  return [buySig, sellSig].filter(Boolean);
+}
+
+function getDualSignals(candles) {
+  // Miala signal raha SL / INVALIDÉ / ANNULÉ / efa clôturé (TP) — tsy miseho intsony live
+  const list = getAllSimSignals(candles).filter(s => {
+    if (s.cancelled) return false;
+    if (s.result === 'SL' || s.result === 'INVALIDÉ') return false;
+    if (s.closeTime) return false; // TP1+TP2, TP3, BE — logé ao history fa esorina amin'ny box
+    return true;
+  });
   list.sort((a,b) => b.score - a.score);
   return list.slice(0, 2);
 }
@@ -751,8 +858,8 @@ function signalStatusInfo(sig) {
 function renderSignal(signals) {
   const box = document.getElementById('signalBox');
   if (!signals || !signals.length) {
-    box.innerHTML = `<div class="empty">Aucun signal haute probabilité pour le moment.<br>Le moteur ne prend que les setups ≥ ${CONFIG.minScore}% (PDF: confluence ≥2).</div>`;
-    document.getElementById('aiText').textContent = "En attente d'un setup SMC valide (SH/SMS + BMS + RTO ± OTE ± Session) sur les 300 dernières bougies 15min.";
+    box.innerHTML = `<div class="empty">Aucun setup SMC assuré pour le moment.<br>Critères : BOS + Order Block + ≥${CONFIG.minConfCount} confluences (FVG / SH / OTE / Session) · Score ≥ ${CONFIG.minScore}</div>`;
+    document.getElementById('aiText').textContent = "En attente d'un setup SMC COMPLET (BOS + OB + FVG/Liquidity/OTE/Session) sur les 300 dernières bougies " + CONFIG.tfLabel + ".";
     return;
   }
   const rs = riskSettings();
@@ -768,7 +875,8 @@ function renderSignal(signals) {
       <span class="signal-status ${st.cls}">${st.label}</span>
       <div class="signal-dir ${dirClass}">${t.dir === 'ACHAT' ? '▲ ACHAT (LIMIT)' : '▼ VENTE (LIMIT)'}<span class="signal-type">${t.type}</span></div>
       <div class="levels">
-        <div class="level entry"><div class="lbl">Entry (Limit / RTO)</div><div class="val">${t.entry.toFixed(2)}</div></div>
+        <div class="level entry"><div class="lbl">TF</div><div class="val" style="color:var(--cyan)">${t.tf || CONFIG.tfLabel}</div></div>
+        <div class="level entry"><div class="lbl">Entry (Limit / OB)</div><div class="val">${t.entry.toFixed(2)}</div></div>
         <div class="level sl"><div class="lbl">Stop Loss</div><div class="val">${t.sl.toFixed(2)}</div></div>
         <div class="level tp"><div class="lbl">TP1 (1R)</div><div class="val">${t.tp1.toFixed(2)}</div></div>
         <div class="level tp"><div class="lbl">TP2 (2R) ★</div><div class="val">${t.tp2.toFixed(2)}</div></div>
@@ -776,6 +884,7 @@ function renderSignal(signals) {
         <div class="level"><div class="lbl">Risque</div><div class="val">${t.risk.toFixed(2)} pts</div></div>
       </div>
       <div class="meta-row">
+        <div class="meta">TF <b>${t.tf || CONFIG.tfLabel}</b></div>
         <div class="meta">Score <b>${t.score}</b></div>
         <div class="meta">RR réalisé <b>${rrTxt}</b></div>
         <div class="meta">Risque suggéré <b>${rs.riskAmount}$</b> (${rs.riskPct}% de ${rs.capital}$)</div>
@@ -786,16 +895,18 @@ function renderSignal(signals) {
 
   const primary = signals.find(s => s.entered && !s.closeTime) || signals[0];
   const aiTexts = {
-    'SH': "Stop Hunt + BMS + RTO (PDF 6.2). Liquidité balayée puis retour sur Order Block. Setup institutionnel fort.",
-    'SMS': "Failure Swing + BMS + RTO (PDF 6.3). Échec de break + cassure de structure + retour OB.",
-    'BMS': "BMS + RTO confirmé. Attendre confluence OTE / Session London-NY pour plus de confiance."
+    'SH': "SH + BOS + OB (PDF). Liquidité SSL balayée → retour sur Order Block haussier. Setup institutionnel fort.",
+    'SMS': "SMS + BOS + OB (PDF). Failure Swing + cassure structure → retour sur Order Block baissier.",
+    'BOS': "BOS + Order Block confirmé. Confluences FVG / OTE / Session renforcent la qualité."
   };
-  const key = Object.keys(aiTexts).find(k => primary.type.startsWith(k));
+  const key = Object.keys(aiTexts).find(k => primary.type.includes(k));
   let extra = "";
-  if (primary.allowTP3) extra = " Score ≥ 92 → TP3 autorisé.";
-  else extra = " TP principal = TP2 (TP3 désactivé tant que score < 92).";
-  if (signals.length === 2) extra += " Deux zones (Achat+Vente) — première touchée gagne.";
-  document.getElementById('aiText').textContent = (aiTexts[key] || "Setup SMC haute confluence (PDF) détecté.") + extra;
+  if (primary.allowTP3) extra = " Score ≥ " + CONFIG.highConfScore + " → TP3 autorisé.";
+  else extra = " TP principal = TP2 (TP3 si score ≥ " + CONFIG.highConfScore + ").";
+  if (primary.type.includes('FVG')) extra += " FVG en confluence.";
+  if (primary.type.includes('OTE')) extra += " Zone OTE (0.62-0.79).";
+  if (signals.length === 2) extra += " Deux zones — première touchée gagne.";
+  document.getElementById('aiText').textContent = (aiTexts[key] || "Setup SMC COMPLET (BOS+OB+confluences) détecté.") + extra;
 }
 
 function renderZonesFromCandles(candles) {
@@ -892,8 +1003,10 @@ async function refreshTicker() {
 async function rescanLive() {
   try {
     liveCandles = await fetchLatestCandles(300);
-    const signals = getDualSignals(liveCandles);
-    checkNewEntries(signals);
+    // Log SL/TP closes aloha (getAllSimSignals), avy eo filtre display
+    const allSim = getAllSimSignals(liveCandles);
+    checkNewEntries(allSim);
+    const signals = getDualSignals(liveCandles); // efa filtrée: tsy misy SL/closed
     renderZonesFromCandles(liveCandles);
     renderSignal(signals);
   } catch (e) {
