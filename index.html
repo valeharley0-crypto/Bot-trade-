@@ -212,7 +212,12 @@
   }
   #authGate::before {
     content: ''; position: absolute; inset: 0;
-    background: linear-gradient(160deg, rgba(7,11,20,.92) 0%, rgba(7,11,20,.75) 45%, rgba(0,40,60,.85) 100%);
+    background: linear-gradient(160deg, rgba(7,11,20,.72) 0%, rgba(7,11,20,.55) 40%, rgba(0,30,50,.65) 100%);
+  }
+  #authGate {
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
   }
   .auth-wrap {
     position: relative; z-index: 1; min-height: 100%;
@@ -261,6 +266,21 @@
   .status-pill.rejected { background: rgba(255,61,113,.15); color: var(--bear); }
   button.btn.sm { padding: 5px 10px; font-size: 11px; }
   button.btn.danger { border-color: var(--bear); color: var(--bear); }
+
+  /* Admin drawer near logout */
+  #adminDrawer {
+    display: none; position: fixed; top: 0; right: 0; width: min(420px, 100%);
+    height: 100%; z-index: 150; background: var(--panel);
+    border-left: 1px solid var(--line); box-shadow: -8px 0 40px rgba(0,0,0,.5);
+    overflow-y: auto; padding: 16px;
+  }
+  #adminDrawer.open { display: block; }
+  #adminBackdrop {
+    display: none; position: fixed; inset: 0; z-index: 140; background: rgba(0,0,0,.45);
+  }
+  #adminBackdrop.open { display: block; }
+  .admin-drawer-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .admin-drawer-head h3 { font-size: 15px; }
 </style>
 </head>
 <body>
@@ -271,9 +291,11 @@
     <div class="auth-card">
       <h2>Ares AI Analyse SMC</h2>
       <p class="auth-desc">
-        Plateforme SMC multi-timeframe (M5·M15·M30) pour XAU/USD.
-        Signaux institutionnels : BOS, Order Block, FVG, liquidité, OTE.
-        Accès réservé aux membres validés par l'administrateur.
+        <b>Ares AI Analyse SMC</b> — signaux multi-TF (M5 · M15 · M30 · H1) sur XAU/USD.
+        BOS, Order Block, FVG, liquidité, OTE, displacement.
+      </p>
+      <p class="auth-desc" id="authTelegramHint" style="font-size:12px;border-left:3px solid var(--cyan);padding-left:10px;margin-bottom:14px">
+        Après paiement : envoyez sur Telegram le <b>capture d'écran</b> du transfert + votre <b>numéro</b> + <b>nom d'inscription</b> pour validation admin.
       </p>
       <div class="auth-price">
         <div class="amt" id="authFeeDisplay">30 000 Ar</div>
@@ -347,7 +369,7 @@
     </div>
 
     <div class="card">
-      <div class="card-title">Signaux Actifs — Multi-TF (M5/M15/M30) · score ≥ 88</div>
+      <div class="card-title">Signaux Actifs — Multi-TF (M5·M15·M30·H1) · le plus assuré</div>
       <div class="dual-signals" id="signalBox">
         <div class="empty">Connexion à l'API…</div>
       </div>
@@ -365,7 +387,7 @@
   <div class="grid-2">
     <div class="card">
       <div class="card-title">
-        <span>Zones Clés (M5 · M15 · M30)</span>
+        <span>Zones Clés (M5 · M15 · M30 · H1)</span>
         <span style="font-size:10px;color:var(--muted)">Invalidées = supprimées</span>
       </div>
       <div id="zonesList"><div class="empty">Aucune zone active</div></div>
@@ -397,44 +419,6 @@
       <table>
         <thead><tr><th>Date</th><th>Type</th><th>Sens</th><th>Résultat</th><th>RR</th></tr></thead>
         <tbody id="histBody"><tr><td colspan="5" class="empty">Aucun trade encore</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Panel Admin : membres, vérification, vues (séparé des signaux) -->
-  <div class="card" id="adminPanel">
-    <div class="card-title">
-      <span>Panel Admin — Membres &amp; Accès</span>
-      <span style="font-size:10px;color:var(--warn)">Réservé administrateur</span>
-    </div>
-    <div class="admin-grid">
-      <div>
-        <div class="card-title" style="margin-bottom:8px">Paramètres d'accès</div>
-        <div class="controls-row">
-          <div class="field"><label>Prix (Ar)</label><input id="adminFee" type="number" value="30000"></div>
-          <div class="field"><label>N° paiement</label><input id="adminPhone" placeholder="034 xx xxx xx"></div>
-        </div>
-        <div class="field" style="margin-bottom:10px"><label>Note paiement</label><input id="adminPayNote" style="min-width:100%" placeholder="MVola / Orange Money — référence ARES"></div>
-        <button class="btn primary" id="btnSaveSettings">Enregistrer paramètres</button>
-      </div>
-      <div>
-        <div class="card-title" style="margin-bottom:8px">Statistiques</div>
-        <div class="stats-grid">
-          <div class="stat"><div class="num" id="statMembers">0</div><div class="lbl">Membres</div></div>
-          <div class="stat"><div class="num" id="statPending">0</div><div class="lbl">En attente</div></div>
-          <div class="stat"><div class="num" id="statViews">0</div><div class="lbl">Vues signaux</div></div>
-        </div>
-      </div>
-    </div>
-    <div class="card-title" style="margin-top:18px">Tableau membres (validation)</div>
-    <div style="overflow-x:auto">
-      <table>
-        <thead>
-          <tr><th>Nom</th><th>Contact</th><th>Statut</th><th>Vues</th><th>Actions</th></tr>
-        </thead>
-        <tbody id="membersBody">
-          <tr><td colspan="5" class="empty">Aucun membre</td></tr>
-        </tbody>
       </table>
     </div>
   </div>
@@ -481,7 +465,8 @@ const CONFIG = {
   timeframes: [
     { interval: '5min',  label: 'M5',  candles: 250 },
     { interval: '15min', label: 'M15', candles: 300 },
-    { interval: '30min', label: 'M30', candles: 200 }
+    { interval: '30min', label: 'M30', candles: 200 },
+    { interval: '1h',    label: 'H1',  candles: 200 }
   ],
   interval: '15min',      // backtest par défaut
   tfLabel: 'M15',
@@ -514,7 +499,7 @@ const LS = {
 
 /* Admin par défaut — changez le mot de passe après 1ère connexion */
 const DEFAULT_ADMIN = { id: 'admin', name: 'Administrateur', email: 'admin', phone: '', pass: 'ares2026', role: 'admin', status: 'approved', verified: true, views: 0, createdAt: Date.now() };
-const DEFAULT_SETTINGS = { feeAr: 30000, paymentPhone: '034 00 000 00', paymentNote: 'MVola / Orange Money — réf. ARES' };
+const DEFAULT_SETTINGS = { feeAr: 30000, paymentPhone: '034 00 000 00', paymentNote: 'MVola / Orange Money — réf. ARES', telegram: 'https://t.me/' };
 
 let liveHistory = safeParse(localStorage.getItem(LS.liveHistory), []);
 let backtestData = safeParse(localStorage.getItem(LS.backtest), null);
@@ -555,30 +540,50 @@ function refreshAuthPrice() {
   document.getElementById('authFeeDisplay').textContent = (siteSettings.feeAr || 30000).toLocaleString('fr-FR') + ' Ar';
   document.getElementById('authPhoneDisplay').textContent = 'Numéro : ' + (siteSettings.paymentPhone || '—') +
     (siteSettings.paymentNote ? ' · ' + siteSettings.paymentNote : '');
+  const tg = siteSettings.telegram || '';
+  const hint = document.getElementById('authTelegramHint');
+  if (hint) {
+    hint.innerHTML = tg
+      ? 'Après paiement : envoyez sur <a href="'+tg+'" target="_blank" rel="noopener" style="color:var(--cyan)">Telegram</a> le <b>capture d\'écran</b> du transfert + votre <b>numéro</b> + <b>nom d\'inscription</b> pour validation admin.'
+      : 'Après paiement : envoyez sur Telegram (lien fourni par admin) le <b>capture d\'écran</b> + <b>numéro</b> + <b>nom d\'inscription</b>.';
+  }
 }
 function renderUserBar() {
   const bar = document.getElementById('userBar');
   if (!currentUser) { bar.innerHTML = ''; return; }
   const role = currentUser.role === 'admin' ? 'admin' : (currentUser.status === 'approved' ? 'member' : 'pending');
   const roleLabel = currentUser.role === 'admin' ? 'ADMIN' : (currentUser.status === 'approved' ? 'MEMBRE' : 'EN ATTENTE');
+  const adminBtn = currentUser.role === 'admin'
+    ? '<button class="btn sm" id="btnOpenAdmin" style="border-color:var(--warn);color:var(--warn)">Membres</button>'
+    : '';
   bar.innerHTML = `<span><b>${currentUser.name || currentUser.id}</b></span>
     <span class="badge-role ${role}">${roleLabel}</span>
+    ${adminBtn}
     <button class="btn sm" id="btnLogout">Déconnexion</button>`;
-  document.getElementById('btnLogout').onclick = () => { saveSession(null); gateAuth(); };
+  document.getElementById('btnLogout').onclick = () => { saveSession(null); closeAdminDrawer(); gateAuth(); };
+  const ob = document.getElementById('btnOpenAdmin');
+  if (ob) ob.onclick = () => openAdminDrawer();
 }
 function renderAdminPanel() {
-  const panel = document.getElementById('adminPanel');
   const isAdmin = currentUser && currentUser.role === 'admin';
-  panel.style.display = isAdmin ? 'block' : 'none';
   if (!isAdmin) return;
-  document.getElementById('adminFee').value = siteSettings.feeAr || 30000;
-  document.getElementById('adminPhone').value = siteSettings.paymentPhone || '';
-  document.getElementById('adminPayNote').value = siteSettings.paymentNote || '';
+  const fee = document.getElementById('adminFee');
+  if (fee) fee.value = siteSettings.feeAr || 30000;
+  const phone = document.getElementById('adminPhone');
+  if (phone) phone.value = siteSettings.paymentPhone || '';
+  const note = document.getElementById('adminPayNote');
+  if (note) note.value = siteSettings.paymentNote || '';
+  const tg = document.getElementById('adminTelegram');
+  if (tg) tg.value = siteSettings.telegram || '';
   const list = members.filter(m => m.role !== 'admin');
-  document.getElementById('statMembers').textContent = list.filter(m => m.status === 'approved').length;
-  document.getElementById('statPending').textContent = list.filter(m => m.status === 'pending').length;
-  document.getElementById('statViews').textContent = signalViews;
+  const sm = document.getElementById('statMembers');
+  if (sm) sm.textContent = list.filter(m => m.status === 'approved').length;
+  const sp = document.getElementById('statPending');
+  if (sp) sp.textContent = list.filter(m => m.status === 'pending').length;
+  const sv = document.getElementById('statViews');
+  if (sv) sv.textContent = signalViews;
   const body = document.getElementById('membersBody');
+  if (!body) return;
   if (!list.length) { body.innerHTML = '<tr><td colspan="5" class="empty">Aucun membre inscrit</td></tr>'; return; }
   body.innerHTML = list.slice().reverse().map(m => `
     <tr>
@@ -688,10 +693,23 @@ function initAuthUI() {
     siteSettings.feeAr = +document.getElementById('adminFee').value || 30000;
     siteSettings.paymentPhone = document.getElementById('adminPhone').value.trim();
     siteSettings.paymentNote = document.getElementById('adminPayNote').value.trim();
+    const tgEl = document.getElementById('adminTelegram');
+    if (tgEl) siteSettings.telegram = tgEl.value.trim();
     saveSettings();
     refreshAuthPrice();
     alert('Paramètres enregistrés.');
   };
+}
+function openAdminDrawer() {
+  renderAdminPanel();
+  document.getElementById('adminDrawer').classList.add('open');
+  document.getElementById('adminBackdrop').classList.add('open');
+}
+function closeAdminDrawer() {
+  const d = document.getElementById('adminDrawer');
+  const b = document.getElementById('adminBackdrop');
+  if (d) d.classList.remove('open');
+  if (b) b.classList.remove('open');
 }
 
 function safeParse(str, fb) { try { return str ? JSON.parse(str) : fb; } catch(e) { return fb; } }
@@ -1216,28 +1234,40 @@ function riskSettings() {
   return { capital, riskPct, riskAmount: +(capital * riskPct / 100).toFixed(2) };
 }
 
-/* Scan multi-TF : M5 + M15 + M30, HTF alignment bonus */
+/* Scan multi-TF : M5 + M15 + M30 + H1 — signal le plus fort / assuré */
 function scanAllTF(candlesByTF) {
   let all = [];
-  const htfRaw = (candlesByTF['M30'] || []).length ? scanSMC(candlesByTF['M30'], 'M30') : [];
-  const htfBias = htfRaw.length ? htfRaw[htfRaw.length - 1].dir : null;
+  // Bias HTF : H1 prioritaire, sinon M30
+  let htfBias = null;
+  for (const lab of ['H1', 'M30']) {
+    const c = candlesByTF[lab] || [];
+    if (c.length >= 30) {
+      const raw = scanSMC(c, lab);
+      if (raw.length) { htfBias = raw[raw.length - 1].dir; break; }
+    }
+  }
 
   for (const tf of CONFIG.timeframes) {
     const candles = candlesByTF[tf.label] || [];
     if (candles.length < 30) continue;
     const raw = scanSMC(candles, tf.label);
     raw.forEach(s => {
-      // Bonus raha LTF mitovy direction amin'ny M30 (HTF bias)
-      if (htfBias && s.dir === htfBias && tf.label !== 'M30') {
+      // Alignement HTF (H1/M30)
+      if (htfBias && s.dir === htfBias) {
         s.score += CONFIG.htfAlignBonus;
-        s.type = s.type + '+HTF';
+        if (!s.type.includes('HTF')) s.type = s.type + '+HTF';
         s.htfAlign = true;
+      } else if (htfBias && s.dir !== htfBias && (tf.label === 'M5' || tf.label === 'M15')) {
+        // Contre HTF sur LTF → pénalité (moins assuré)
+        s.score -= 12;
       }
-      s._candles = candles; // for simulateTrade
+      // Bonus TF supérieur (H1/M30 un peu plus de poids structurel)
+      if (tf.label === 'H1') s.score += 6;
+      if (tf.label === 'M30') s.score += 3;
+      s._candles = candles;
       all.push(s);
     });
   }
-  // Sort by score desc, keep best per direction
   all.sort((a, b) => b.score - a.score);
   return all;
 }
@@ -1499,5 +1529,32 @@ renderHistory();
 renderEntryLog();
 renderBacktest();
 </script>
+
+<div id="adminBackdrop" onclick="closeAdminDrawer()"></div>
+<div id="adminDrawer">
+  <div class="admin-drawer-head">
+    <h3>Panel Admin — Membres</h3>
+    <button class="btn sm" type="button" onclick="closeAdminDrawer()">Fermer</button>
+  </div>
+  <div class="card-title" style="margin-bottom:8px">Paramètres d'accès</div>
+  <div class="field" style="margin-bottom:8px"><label>Prix (Ar)</label><input id="adminFee" type="number" value="30000" style="width:100%;min-width:0"></div>
+  <div class="field" style="margin-bottom:8px"><label>N° paiement</label><input id="adminPhone" placeholder="034 xx xxx xx" style="width:100%;min-width:0"></div>
+  <div class="field" style="margin-bottom:8px"><label>Note paiement</label><input id="adminPayNote" placeholder="MVola / Orange Money" style="width:100%;min-width:0"></div>
+  <div class="field" style="margin-bottom:10px"><label>Lien Telegram (validation)</label><input id="adminTelegram" placeholder="https://t.me/votre_compte" style="width:100%;min-width:0"></div>
+  <button class="btn primary" id="btnSaveSettings" style="width:100%;margin-bottom:16px">Enregistrer paramètres</button>
+  <div class="stats-grid" style="margin-bottom:14px">
+    <div class="stat"><div class="num" id="statMembers">0</div><div class="lbl">Membres</div></div>
+    <div class="stat"><div class="num" id="statPending">0</div><div class="lbl">En attente</div></div>
+    <div class="stat"><div class="num" id="statViews">0</div><div class="lbl">Vues</div></div>
+  </div>
+  <div class="card-title">Tableau membres</div>
+  <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Nom</th><th>Contact</th><th>Statut</th><th>Vues</th><th>Actions</th></tr></thead>
+      <tbody id="membersBody"><tr><td colspan="5" class="empty">Aucun membre</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
 </body>
 </html>
