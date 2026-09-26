@@ -7,35 +7,326 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#070b14; --panel:#0d1321; --panel-2:#131a2b; --line:#1e2a3f; --text:#e8eef8; --muted:#7a8ba3; --cyan:#00d4ff; --bull:#00e676; --bear:#ff3d71; }
-  * { box-sizing:border-box; margin:0; padding:0; }
+  :root {
+    --bg: #070b14;
+    --panel: #0d1321;
+    --panel-2: #131a2b;
+    --line: #1e2a3f;
+    --text: #e8eef8;
+    --muted: #7a8ba3;
+    --cyan: #00d4ff;
+    --cyan-dim: #00a8cc;
+    --bull: #00e676;
+    --bear: #ff3d71;
+    --warn: #ffb020;
+    --radius: 14px;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-padding-top: env(safe-area-inset-top, 0px); }
-  body { background:var(--bg); color:var(--text); font-family:'Inter', sans-serif; min-height:100%; }
-  .mono { font-family:'JetBrains Mono', monospace; }
-  header { position:sticky; top:0; z-index:50; background:linear-gradient(180deg,#070b14 85%,transparent); border-bottom:1px solid var(--line); padding:calc(14px+env(safe-area-inset-top,0)) 20px 14px; display:flex; align-items:center; justify-content:space-between; }
-  .brand .logo { width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,#00d4ff,#0066ff); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:18px; color:#fff; }
-  .live-badge { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); background:var(--panel-2); padding:6px 12px; border-radius:20px; }
-  main { max-width:1200px; margin:0 auto; padding:18px 16px; display:grid; gap:16px; }
-  .grid-2 { display:grid; gap:16px; }
-  @media(min-width:960px){ .grid-2{grid-template-columns:1.6fr 1fr;} }
-  .card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px; }
-  .card-title { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; margin-bottom:12px; }
-  /* (TOUS les autres styles du fichier original sont conservés ici – identiques à 100%) */
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100%;
+    padding-bottom: 40px;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  header {
+    position: sticky; top: 0; z-index: 50;
+    background: linear-gradient(180deg, #070b14 85%, transparent);
+    border-bottom: 1px solid var(--line);
+    padding: calc(14px + env(safe-area-inset-top, 0px)) 20px 14px;
+    display: flex; flex-wrap: wrap; gap: 16px;
+    align-items: center; justify-content: space-between;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand .logo {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: linear-gradient(135deg, #00d4ff, #0066ff);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 18px; color: #fff;
+    box-shadow: 0 0 20px rgba(0,212,255,.35);
+    flex-shrink: 0;
+  }
+  .brand h1 { font-size: 17px; font-weight: 700; letter-spacing: -.3px; }
+  .brand span { font-size: 11px; color: var(--muted); display: block; margin-top: 1px; }
+
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--muted);
+    background: var(--panel-2); padding: 6px 12px; border-radius: 20px;
+  }
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--bull); box-shadow: 0 0 0 3px rgba(0,230,118,.2);
+    animation: pulse 2s infinite;
+  }
+  .live-dot.off { background: var(--bear); box-shadow: 0 0 0 3px rgba(255,61,113,.2); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+  main { max-width: 1200px; margin: 0 auto; padding: 18px 16px; display: grid; gap: 16px; }
+
+  .grid-2 { display: grid; gap: 16px; }
+  @media(min-width: 960px) { .grid-2 { grid-template-columns: 1.6fr 1fr; } }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    overflow-x: auto;
+  }
+  .card-title {
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .6px;
+    margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+
+  /* Price ticker */
+  .ticker-card { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+  .ticker-left { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .ticker-price { font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 700; letter-spacing: -.5px; }
+  .ticker-change { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; padding: 3px 10px; border-radius: 8px; }
+  .ticker-change.up { color: var(--bull); background: rgba(0,230,118,.1); }
+  .ticker-change.down { color: var(--bear); background: rgba(255,61,113,.1); }
+  .ticker-change.flat { color: var(--muted); background: var(--panel-2); }
+  .ticker-meta { font-size: 11px; color: var(--muted); }
+  .ticker-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .pill { font-size: 11px; padding: 5px 11px; border-radius: 20px; background: var(--panel-2); color: var(--muted); display:flex; align-items:center; gap:6px; }
+  .pill .dot { width:6px; height:6px; border-radius:50%; }
+  .pill.open .dot { background: var(--bull); }
+  .pill.closed .dot { background: var(--bear); }
+
+  #tv_chart { height: 420px; border-radius: 10px; overflow: hidden; }
+
+  /* Signal cards */
+  .dual-signals { display: flex; flex-direction: column; gap: 12px; }
+  .signal-box {
+    background: linear-gradient(145deg, #0d1321, #111827);
+    border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px;
+  }
+  .signal-box.status-pending { border-style: dashed; opacity: .9; }
+  .signal-box.status-cancelled { opacity: .5; }
+  .signal-status {
+    font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 6px;
+    display: inline-block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .3px;
+  }
+  .signal-status.pending { background: rgba(255,176,32,.15); color: var(--warn); }
+  .signal-status.active { background: rgba(0,230,118,.15); color: var(--bull); }
+  .signal-status.cancelled { background: rgba(122,139,163,.15); color: var(--muted); }
+  .signal-status.closed { background: rgba(0,212,255,.15); color: var(--cyan); }
+  .signal-dir { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .signal-dir.buy { color: var(--bull); }
+  .signal-dir.sell { color: var(--bear); }
+  .signal-type {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 6px; margin-bottom: 12px; margin-left: 6px;
+    background: rgba(0,212,255,.12); color: var(--cyan);
+  }
+  .levels { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+  .level { background: var(--panel-2); border-radius: 8px; padding: 10px; }
+  .level .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; }
+  .level .val { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; margin-top: 2px; }
+  .level.entry .val { color: var(--cyan); }
+  .level.sl .val { color: var(--bear); }
+  .level.tp .val { color: var(--bull); }
+
+  .meta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+  .meta { font-size: 12px; color: var(--muted); }
+  .meta b { color: var(--text); font-family: 'JetBrains Mono', monospace; }
+
+  .prob-bar { height: 6px; background: var(--panel-2); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+  .prob-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--cyan), var(--bull)); transition: width .4s; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; }
+  .stat { background: var(--panel-2); border-radius: 10px; padding: 12px; text-align: center; }
+  .stat .num { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; }
+  .stat .lbl { font-size: 10px; color: var(--muted); margin-top: 2px; text-transform: uppercase; }
+
+  .zone { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 8px; margin-bottom: 6px; background: var(--panel-2); border-left: 3px solid transparent; }
+  .zone.bull { border-left-color: var(--bull); }
+  .zone.bear { border-left-color: var(--bear); }
+  .zone .z-info { font-size: 12px; }
+  .zone .z-type { font-size: 10px; color: var(--muted); text-transform: uppercase; }
+  .zone .z-price { font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+  .zone .z-score { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--cyan); }
+
+  .ai-box { background: linear-gradient(135deg, rgba(0,212,255,.08), rgba(0,102,255,.06)); border: 1px solid rgba(0,212,255,.2); border-radius: 12px; padding: 14px; }
+  .ai-box .ai-title { font-size: 11px; font-weight: 600; color: var(--cyan); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .ai-box p { font-size: 13px; line-height: 1.5; color: var(--text); }
+
+  .controls-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+  .field input {
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+    padding: 8px 10px; border-radius: 8px; font-size: 13px; font-family: 'JetBrains Mono', monospace;
+    min-width: 130px;
+  }
+  .field input:focus { outline: none; border-color: var(--cyan); }
+
+  button.btn {
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+    padding: 9px 16px; border-radius: 8px; font-size: 12px; cursor: pointer;
+    font-family: inherit; transition: .15s; font-weight: 600;
+  }
+  button.btn:hover { border-color: var(--cyan); color: var(--cyan); }
+  button.btn.primary { background: linear-gradient(135deg, #00d4ff, #0066ff); color: #fff; border: none; }
+  button.btn.primary:hover { color: #fff; opacity: .9; }
+  button.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  .bt-status { font-size: 12px; color: var(--muted); margin-top: 8px; min-height: 16px; }
+
+  .month-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+  .month-tab {
+    flex-shrink: 0; background: var(--panel-2); border: 1px solid var(--line); color: var(--muted);
+    padding: 7px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; font-family: inherit; font-weight: 600;
+  }
+  .month-tab.active { background: linear-gradient(135deg, #00d4ff, #0066ff); color: #fff; border: none; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; color: var(--muted); font-weight: 500; padding: 8px 6px; border-bottom: 1px solid var(--line); font-size: 10px; text-transform: uppercase; }
+  td { padding: 8px 6px; border-bottom: 1px solid var(--line); font-family: 'JetBrains Mono', monospace; }
+  .res-tp { color: var(--bull); font-weight: 600; }
+  .res-sl { color: var(--bear); font-weight: 600; }
+  .res-be { color: var(--warn); font-weight: 600; }
+
+  .entry-log { max-height: 200px; overflow-y: auto; }
+  .entry-log-item { font-size: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 8px; }
+  .entry-log-item .el-dir.buy { color: var(--bull); font-weight: 600; }
+  .entry-log-item .el-dir.sell { color: var(--bear); font-weight: 600; }
+  .entry-log-item .el-time { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+
+  .empty { color: var(--muted); font-size: 13px; padding: 12px 0; }
+  .footer-note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 20px; line-height: 1.6; }
+
+  /* Auth screens */
+  #authGate {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    /* === RESTAURATION MANUELLE ===
+       Remplacez la ligne ci-dessous par votre ligne d'origine complète :
+       background: #070b14 url('data:image/jpeg;base64,VOTRE_LONGUE_CHAINE_BASE64_ICI') center/cover no-repeat;
+       (copiez-la depuis votre fichier original — c'est juste l'image de fond décorative,
+        rien d'autre dans le site n'en dépend) */
+    background: #070b14 center/cover no-repeat;
+  }
+  #authGate::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(160deg, rgba(7,11,20,.72) 0%, rgba(7,11,20,.55) 40%, rgba(0,30,50,.65) 100%);
+  }
+  #authGate {
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+  }
+  .auth-wrap {
+    position: relative; z-index: 1; min-height: 100%;
+    display: flex; align-items: center; justify-content: center; padding: 24px 16px;
+  }
+  .auth-card {
+    width: 100%; max-width: 420px; background: rgba(13,19,33,.92);
+    border: 1px solid rgba(0,212,255,.25); border-radius: 18px; padding: 28px 22px;
+    backdrop-filter: blur(12px); box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  }
+  .auth-card h2 { font-size: 22px; margin-bottom: 6px; }
+  .auth-desc { font-size: 13px; color: var(--muted); line-height: 1.55; margin-bottom: 18px; }
+  .auth-price {
+    background: linear-gradient(135deg, rgba(0,212,255,.15), rgba(0,102,255,.1));
+    border: 1px solid rgba(0,212,255,.3); border-radius: 12px; padding: 14px; margin-bottom: 18px; text-align: center;
+  }
+  .auth-price .amt { font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 700; color: var(--cyan); }
+  .auth-price .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .auth-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .auth-tabs button {
+    flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--panel-2); color: var(--muted); font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .auth-tabs button.on { background: linear-gradient(135deg,#00d4ff,#0066ff); color: #fff; border: none; }
+  .auth-field { margin-bottom: 12px; }
+  .auth-field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; }
+  .auth-field input {
+    width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--panel-2); color: var(--text); font-size: 14px; font-family: inherit;
+  }
+  .auth-msg { font-size: 12px; margin-top: 10px; min-height: 18px; }
+  .auth-msg.err { color: var(--bear); }
+  .auth-msg.ok { color: var(--bull); }
+  .user-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  .user-bar b { color: var(--text); }
+  .badge-role { font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 700; }
+  .badge-role.admin { background: rgba(255,176,32,.2); color: var(--warn); }
+  .badge-role.member { background: rgba(0,230,118,.15); color: var(--bull); }
+  .badge-role.pending { background: rgba(122,139,163,.2); color: var(--muted); }
+  #adminPanel { display: none; }
+  .admin-grid { display: grid; gap: 12px; }
+  @media(min-width:800px){ .admin-grid { grid-template-columns: 1fr 1fr; } }
+  .status-pill { font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 700; }
+  .status-pill.pending { background: rgba(255,176,32,.15); color: var(--warn); }
+  .status-pill.approved { background: rgba(0,230,118,.15); color: var(--bull); }
+  .status-pill.rejected { background: rgba(255,61,113,.15); color: var(--bear); }
+  button.btn.sm { padding: 5px 10px; font-size: 11px; }
+  button.btn.danger { border-color: var(--bear); color: var(--bear); }
+
+  /* Admin drawer near logout */
+  #adminDrawer {
+    display: none; position: fixed; top: 0; right: 0; width: min(420px, 100%);
+    height: 100%; z-index: 150; background: var(--panel);
+    border-left: 1px solid var(--line); box-shadow: -8px 0 40px rgba(0,0,0,.5);
+    overflow-y: auto; padding: 16px;
+  }
+  #adminDrawer.open { display: block; }
+  #adminBackdrop {
+    display: none; position: fixed; inset: 0; z-index: 140; background: rgba(0,0,0,.45);
+  }
+  #adminBackdrop.open { display: block; }
+  .admin-drawer-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .admin-drawer-head h3 { font-size: 15px; }
 </style>
 </head>
 <body>
 
-<!-- AUTH GATE (identique à l’original) -->
+<!-- ========== AUTH GATE ========== -->
 <div id="authGate">
   <div class="auth-wrap">
     <div class="auth-card">
       <h2>Ares AI Analyse SMC</h2>
-      <p class="auth-desc">Signaux multi-TF (M5·M15·M30·H1) sur XAU/USD & Volatility 100/75</p>
+      <p class="auth-desc">
+        <b>Ares AI Analyse SMC</b> — signaux multi-TF (M5 · M15 · M30 · H1) sur XAU/USD.
+        BOS, Order Block, FVG, liquidité, OTE, displacement.
+      </p>
+      <p class="auth-desc" id="authTelegramHint" style="font-size:12px;border-left:3px solid var(--cyan);padding-left:10px;margin-bottom:14px">
+        Après paiement : envoyez sur Telegram le <b>capture d'écran</b> du transfert + votre <b>numéro</b> + <b>nom d'inscription</b> pour validation admin.
+      </p>
       <div class="auth-price">
         <div class="amt" id="authFeeDisplay">30 000 Ar</div>
-        <div class="sub">Frais d’accès unique · Paiement Mvola / Orange Money</div>
+        <div class="sub">Frais d'accès unique · Paiement mobile</div>
+        <div class="sub" id="authPhoneDisplay" style="margin-top:8px;color:var(--cyan)">Numéro : —</div>
       </div>
-      <!-- (le reste du formulaire est identique) -->
+      <div class="auth-tabs">
+        <button type="button" class="on" id="tabLogin">Connexion</button>
+        <button type="button" id="tabRegister">Inscription</button>
+      </div>
+      <div id="formLogin">
+        <div class="auth-field"><label>Identifiant / Email</label><input id="loginUser" autocomplete="username"></div>
+        <div class="auth-field"><label>Mot de passe</label><input id="loginPass" type="password" autocomplete="current-password"></div>
+        <button class="btn primary" style="width:100%;margin-top:8px" id="btnLogin">Se connecter</button>
+      </div>
+      <div id="formRegister" style="display:none">
+        <div class="auth-field"><label>Nom complet</label><input id="regName"></div>
+        <div class="auth-field"><label>Email</label><input id="regEmail" type="email"></div>
+        <div class="auth-field"><label>Téléphone (paiement)</label><input id="regPhone" placeholder="03X XX XXX XX"></div>
+        <div class="auth-field"><label>Mot de passe</label><input id="regPass" type="password"></div>
+        <p class="auth-desc" style="margin:8px 0;font-size:12px">
+          Après inscription, effectuez le paiement au numéro affiché puis attendez la validation admin.
+        </p>
+        <button class="btn primary" style="width:100%" id="btnRegister">S'inscrire</button>
+      </div>
+      <div class="auth-msg" id="authMsg"></div>
     </div>
   </div>
 </div>
@@ -45,86 +336,1737 @@
 <header>
   <div class="brand">
     <div class="logo">A</div>
-    <div><h1>Ares AI Analyse SMC</h1><span>Ares AI · SMC Multi-TF · Setup assuré</span></div>
+    <div>
+      <h1>Ares AI Analyse SMC</h1>
+      <span>Ares AI · SMC Multi-TF · Setup assuré</span>
+    </div>
   </div>
-  <div class="live-badge"><span class="live-dot" id="liveDot"></span><span id="liveStatus">Connexion…</span></div>
-  <div class="user-bar" id="userBar"></div>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div class="live-badge">
+      <span class="live-dot" id="liveDot"></span>
+      <span id="liveStatus">Connexion…</span>
+    </div>
+    <div class="user-bar" id="userBar"></div>
+  </div>
 </header>
 
 <main>
 
-  <!-- PILL TABS + TOUT LE CONTENU GOLD + SYNTHETIC est identique à l’original -->
-  <!-- (je garde exactement le même HTML que tu avais, seulement les scripts sont corrigés) -->
+  <div class="pill-tabs" style="display:flex;gap:8px;margin-bottom:14px">
+    <button class="month-tab active" id="tabPanelGold" style="flex:1">🥇 GOLD (XAU/USD)</button>
+    <button class="month-tab" id="tabPanelSynth" style="flex:1">📊 SYNTHETIC INDEX</button>
+  </div>
 
+  <div id="panelGold">
+
+  <div class="card ticker-card">
+    <div class="ticker-left">
+      <div class="ticker-price mono" id="tickerPrice">—</div>
+      <div class="ticker-change flat" id="tickerChange">—</div>
+      <div class="ticker-meta">XAU/USD · données différées (~1-15 min, plan gratuit)</div>
+    </div>
+    <div class="ticker-right">
+      <span class="pill" id="marketPill"><span class="dot"></span><span id="marketPillText">…</span></span>
+      <span class="pill" id="creditsPill">⚡ <span id="creditsText">0/800</span> crédits</span>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">
+        <span>Graphique XAU/USD</span>
+        <span style="font-size:10px;color:var(--muted)">TradingView</span>
+      </div>
+      <div id="tv_chart"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Signaux Actifs — Multi-TF (M5·M15·M30·H1) · le plus assuré</div>
+      <div class="dual-signals" id="signalBox">
+        <div class="empty">Connexion à l'API…</div>
+      </div>
+
+      <div style="margin-top:16px">
+        <div class="card-title">AI Insight</div>
+        <div class="ai-box" id="aiBox">
+          <div class="ai-title">⚡ Ares AI</div>
+          <p id="aiText">Analyse en cours. Les signaux ne sont générés que sur confluence ≥ 75%.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">
+        <span>Zones Clés (M5 · M15 · M30 · H1)</span>
+        <span style="font-size:10px;color:var(--muted)">Invalidées = supprimées</span>
+      </div>
+      <div id="zonesList"><div class="empty">Aucune zone active</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Journal des Entrées</div>
+      <div class="entry-log" id="entryLog"><div class="empty">Aucune entrée touchée pour le moment</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Backtest Historique (SMC réel sur données TwelveData)</div>
+    <div class="controls-row">
+      <div class="field"><label>Début</label><input type="month" id="btStart" value="2026-01"></div>
+      <div class="field"><label>Fin</label><input type="month" id="btEnd" value="2026-08"></div>
+      <div class="field"><label>Capital ($)</label><input type="number" id="capitalInput" value="1000" min="0"></div>
+      <div class="field"><label>Risque / trade (%)</label><input type="number" id="riskInput" value="1" min="0.1" step="0.1"></div>
+      <button class="btn primary" id="runBacktestBtn">Lancer le backtest</button>
+      <button class="btn" id="exportCsvBtn">Exporter CSV</button>
+    </div>
+    <div class="bt-status" id="btStatus">Aucun backtest lancé. Chaque signal est évalué indépendamment (pas de règle "une seule position" sur la période historique — voir note ci-dessous).</div>
+    <div id="backtestWrap" style="margin-top:14px"><div class="empty">Aucune donnée de backtest pour le moment.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Historique Live</div>
+    <div style="max-height:280px;overflow:auto">
+      <table>
+        <thead><tr><th>Date</th><th>Type</th><th>Sens</th><th>Résultat</th><th>RR</th></tr></thead>
+        <tbody id="histBody"><tr><td colspan="5" class="empty">Aucun trade encore</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  </div><!-- /panelGold -->
+
+  <div id="panelSynth" style="display:none">
+
+    <div class="pill-tabs" style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="month-tab active" id="tabVol100" style="flex:1">Volatility 100</button>
+      <button class="month-tab" id="tabVol75" style="flex:1">Volatility 75</button>
+    </div>
+
+    <div id="synPanel_vol100">
+      <div class="card ticker-card">
+        <div class="ticker-left">
+          <div class="ticker-price mono" id="syn_vol100_price">—</div>
+          <div class="ticker-meta">Volatility 100 Index · Deriv · 24/7</div>
+        </div>
+        <div class="ticker-right">
+          <span class="pill open"><span class="dot"></span>Live</span>
+          <span class="pill">⚡ Bollinger+RSI (M5/M15)</span>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Graphique Volatility 100</div>
+          <div id="syn_vol100_chart" style="height:420px;border-radius:10px;overflow:hidden"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Signal — TF le plus assuré (M5 · M15)</div>
+          <div class="dual-signals" id="syn_vol100_signalBox"><div class="empty">Connexion…</div></div>
+          <div style="margin-top:16px">
+            <div class="card-title">AI Insight</div>
+            <div class="ai-box"><div class="ai-title">⚡ Ares AI — Vol100</div><p id="syn_vol100_aiText">Analyse en cours.</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Backtest Statistique — Volatility 100 (M5+M15)</div>
+        <div class="controls-row">
+          <div class="field"><label>Bougies par TF</label><input type="number" id="syn_vol100_btCount" value="4000" min="500" max="5000"></div>
+          <button class="btn primary" id="syn_vol100_runBt">Lancer le backtest</button>
+        </div>
+        <div class="bt-status" id="syn_vol100_btStatus">Aucun backtest lancé.</div>
+        <div id="syn_vol100_btWrap"><div class="empty">Aucune donnée.</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Historique Live — Volatility 100</div>
+        <div style="max-height:280px;overflow:auto">
+          <table>
+            <thead><tr><th>Date</th><th>TF</th><th>Sens</th><th>Résultat</th><th>RR</th></tr></thead>
+            <tbody id="syn_vol100_histBody"><tr><td colspan="5" class="empty">Aucun trade encore</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="synPanel_vol75" style="display:none">
+      <div class="card ticker-card">
+        <div class="ticker-left">
+          <div class="ticker-price mono" id="syn_vol75_price">—</div>
+          <div class="ticker-meta">Volatility 75 Index · Deriv · 24/7</div>
+        </div>
+        <div class="ticker-right">
+          <span class="pill open"><span class="dot"></span>Live</span>
+          <span class="pill">⚡ Bollinger+RSI (M5/M15)</span>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Graphique Volatility 75</div>
+          <div id="syn_vol75_chart" style="height:420px;border-radius:10px;overflow:hidden"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Signal — TF le plus assuré (M5 · M15)</div>
+          <div class="dual-signals" id="syn_vol75_signalBox"><div class="empty">Connexion…</div></div>
+          <div style="margin-top:16px">
+            <div class="card-title">AI Insight</div>
+            <div class="ai-box"><div class="ai-title">⚡ Ares AI — Vol75</div><p id="syn_vol75_aiText">Analyse en cours.</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Backtest Statistique — Volatility 75 (M5+M15)</div>
+        <div class="controls-row">
+          <div class="field"><label>Bougies par TF</label><input type="number" id="syn_vol75_btCount" value="4000" min="500" max="5000"></div>
+          <button class="btn primary" id="syn_vol75_runBt">Lancer le backtest</button>
+        </div>
+        <div class="bt-status" id="syn_vol75_btStatus">Aucun backtest lancé.</div>
+        <div id="syn_vol75_btWrap"><div class="empty">Aucune donnée.</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Historique Live — Volatility 75</div>
+        <div style="max-height:280px;overflow:auto">
+          <table>
+            <thead><tr><th>Date</th><th>TF</th><th>Sens</th><th>Résultat</th><th>RR</th></tr></thead>
+            <tbody id="syn_vol75_histBody"><tr><td colspan="5" class="empty">Aucun trade encore</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /panelSynth -->
+
+  <p class="footer-note">
+    Ares AI Analyse SMC v6 — Membres · Admin · Multi-TF · Zone OB · SL beyond liq · Volume<br>
+    Signaux assuré · Panel admin séparé. Ceci n'est pas un conseil financier.
+  </p>
 </main>
-</div>
+</div><!-- /appRoot -->
 
 <script src="https://s3.tradingview.com/tv.js"></script>
+<script>
+new TradingView.widget({
+  container_id: "tv_chart",
+  autosize: true,
+  symbol: "OANDA:XAUUSD",
+  interval: "15",
+  timezone: "Europe/Paris",
+  theme: "dark",
+  style: "1",
+  locale: "fr",
+  toolbar_bg: "#0d1321",
+  enable_publishing: false,
+  hide_side_toolbar: false,
+  allow_symbol_change: false,
+  details: true,
+  hotlist: false,
+  calendar: false,
+  studies: ["Volume@tv-basicstudies"],
+  backgroundColor: "#0d1321",
+  gridColor: "#1e2a3f",
+  width: "100%",
+  height: 420
+});
+</script>
 
 <script>
-// ===================== ARES ANALYSE TRADING — VERSION OPTIMISÉE =====================
+/* ===================== ARES ANALYSE TRADING — MOTEUR RÉEL (GOLD) ===================== */
 const CONFIG = {
-  apiKey: '718522ad18294b5a99af72d1fa5244de',
+  // IMPORTANT: put the TwelveData key in the API_KEY field below before deployment,
+  // or inject it from your backend/VPS. Never expose a production key in public frontend code.
+  apiKey: window.ARES_TWELVEDATA_KEY || '',
   symbol: 'XAU/USD',
-  timeframes: [{interval:'5min',label:'M5',candles:250},{interval:'15min',label:'M15',candles:300}, /* ... tout le reste de CONFIG ... */],
+  timeframes: [
+    { interval: '5min',  label: 'M5',  candles: 250 },
+    { interval: '15min', label: 'M15', candles: 300 },
+    { interval: '30min', label: 'M30', candles: 200 },
+    { interval: '1h',    label: 'H1',  candles: 200 }
+  ],
   interval: '15min',
+  tfLabel: 'M15',
   tickerMs: 120000,
   rescanMs: 600000,
   minScore: 93,
   highConfScore: 98,
+  preferSessions: true,
+  requireOB: true,
+  requireStructure: true,
+  requireSweep: true,
+  requireDispOrFVG: true,
   minConfCount: 3,
-  maxRiskPts: 10
+  maxRiskPts: 10,
+  htfAlignBonus: 12,
+  htfAgainstPenalty: 20,
+  slBuffer: 1.5,
+  minOppositeDist: 80,
+  onlyBestSignal: true
 };
 
-const LS = { liveHistory: 'ares_live_history_v8', backtest: 'ares_backtest_v8', credits: 'ares_credits_v1', /* ... */ };
+const LS = {
+  liveHistory: 'ares_live_history_v8',
+  backtest: 'ares_backtest_v8',
+  credits: 'ares_credits_v1',
+  activeSignals: 'ares_active_signals_v8',
+  entryLog: 'ares_entry_log_v8',
+  members: 'ares_members_v1',
+  settings: 'ares_settings_v1',
+  session: 'ares_session_v1',
+  signalViews: 'ares_signal_views_v1'
+};
 
-let liveCandlesByTF = {}, prevActiveSignals = [];
+const DEFAULT_ADMIN = { id: 'admin', name: 'Administrateur', email: 'admin', phone: '', pass: 'ares2026', role: 'admin', status: 'approved', verified: true, views: 0, createdAt: Date.now() };
+const DEFAULT_SETTINGS = { feeAr: 30000, paymentPhone: '034 00 000 00', paymentNote: 'MVola / Orange Money — réf. ARES', telegram: 'https://t.me/' };
 
-// Fonctions td (fetch avec limite 800), toCandles, scanSMC, simulateTrade, getDualSignals, renderSignal, etc. sont conservées
+let liveHistory = safeParse(localStorage.getItem(LS.liveHistory), []);
+let backtestData = safeParse(localStorage.getItem(LS.backtest), null);
+let prevActiveSignals = safeParse(localStorage.getItem(LS.activeSignals), []);
+let entryLog = safeParse(localStorage.getItem(LS.entryLog), []);
+let members = safeParse(localStorage.getItem(LS.members), null);
+let siteSettings = safeParse(localStorage.getItem(LS.settings), null);
+let currentUser = safeParse(localStorage.getItem(LS.session), null);
+let signalViews = +(localStorage.getItem(LS.signalViews) || 0);
+let liveCandles = [];
+let liveCandlesByTF = {};
+let selectedMonth = null;
+let btRunning = false;
 
+if (!members || !Array.isArray(members) || !members.some(m => m.role === 'admin')) {
+  members = [DEFAULT_ADMIN];
+  localStorage.setItem(LS.members, JSON.stringify(members));
+}
+if (!siteSettings) {
+  siteSettings = { ...DEFAULT_SETTINGS };
+  localStorage.setItem(LS.settings, JSON.stringify(siteSettings));
+}
+
+function saveMembers() { localStorage.setItem(LS.members, JSON.stringify(members)); }
+function saveSettings() { localStorage.setItem(LS.settings, JSON.stringify(siteSettings)); }
+if (siteSettings && siteSettings.twelveDataKey) CONFIG.apiKey = siteSettings.twelveDataKey;
+function saveSession(u) {
+  currentUser = u;
+  if (u) localStorage.setItem(LS.session, JSON.stringify({ id: u.id, role: u.role, name: u.name, status: u.status }));
+  else localStorage.removeItem(LS.session);
+}
+
+function showAuth(msg, ok) {
+  const el = document.getElementById('authMsg');
+  el.className = 'auth-msg ' + (ok ? 'ok' : 'err');
+  el.textContent = msg || '';
+}
+function refreshAuthPrice() {
+  document.getElementById('authFeeDisplay').textContent = (siteSettings.feeAr || 30000).toLocaleString('fr-FR') + ' Ar';
+  document.getElementById('authPhoneDisplay').textContent = 'Numéro : ' + (siteSettings.paymentPhone || '—') +
+    (siteSettings.paymentNote ? ' · ' + siteSettings.paymentNote : '');
+  const tg = siteSettings.telegram || '';
+  const hint = document.getElementById('authTelegramHint');
+  if (hint) {
+    hint.innerHTML = tg
+      ? 'Après paiement : envoyez sur <a href="'+tg+'" target="_blank" rel="noopener" style="color:var(--cyan)">Telegram</a> le <b>capture d\'écran</b> du transfert + votre <b>numéro</b> + <b>nom d\'inscription</b> pour validation admin.'
+      : 'Après paiement : envoyez sur Telegram (lien fourni par admin) le <b>capture d\'écran</b> + <b>numéro</b> + <b>nom d\'inscription</b>.';
+  }
+}
+function renderUserBar() {
+  const bar = document.getElementById('userBar');
+  if (!currentUser) { bar.innerHTML = ''; return; }
+  const role = currentUser.role === 'admin' ? 'admin' : (currentUser.status === 'approved' ? 'member' : 'pending');
+  const roleLabel = currentUser.role === 'admin' ? 'ADMIN' : (currentUser.status === 'approved' ? 'MEMBRE' : 'EN ATTENTE');
+  const adminBtn = currentUser.role === 'admin'
+    ? '<button class="btn sm" id="btnOpenAdmin" style="border-color:var(--warn);color:var(--warn)">Membres</button>'
+    : '';
+  bar.innerHTML = `<span><b>${currentUser.name || currentUser.id}</b></span>
+    <span class="badge-role ${role}">${roleLabel}</span>
+    ${adminBtn}
+    <button class="btn sm" id="btnLogout">Déconnexion</button>`;
+  document.getElementById('btnLogout').onclick = () => { saveSession(null); closeAdminDrawer(); gateAuth(); };
+  const ob = document.getElementById('btnOpenAdmin');
+  if (ob) ob.onclick = () => openAdminDrawer();
+}
+function renderAdminPanel() {
+  const isAdmin = currentUser && currentUser.role === 'admin';
+  if (!isAdmin) return;
+  const fee = document.getElementById('adminFee');
+  if (fee) fee.value = siteSettings.feeAr || 30000;
+  const phone = document.getElementById('adminPhone');
+  if (phone) phone.value = siteSettings.paymentPhone || '';
+  const note = document.getElementById('adminPayNote');
+  if (note) note.value = siteSettings.paymentNote || '';
+  const tg = document.getElementById('adminTelegram');
+  if (tg) tg.value = siteSettings.telegram || '';
+  const list = members.filter(m => m.role !== 'admin');
+  const sm = document.getElementById('statMembers');
+  if (sm) sm.textContent = list.filter(m => m.status === 'approved').length;
+  const sp = document.getElementById('statPending');
+  if (sp) sp.textContent = list.filter(m => m.status === 'pending').length;
+  const sv = document.getElementById('statViews');
+  if (sv) sv.textContent = signalViews;
+  const body = document.getElementById('membersBody');
+  if (!body) return;
+  if (!list.length) { body.innerHTML = '<tr><td colspan="5" class="empty">Aucun membre inscrit</td></tr>'; return; }
+  body.innerHTML = list.slice().reverse().map(m => `
+    <tr>
+      <td>${m.name || '—'}</td>
+      <td style="font-size:11px">${m.email || ''}<br>${m.phone || ''}</td>
+      <td><span class="status-pill ${m.status}">${m.status}${m.verified ? ' · ✓' : ''}</span></td>
+      <td>${m.views || 0}</td>
+      <td style="white-space:nowrap">
+        ${m.status !== 'approved' ? `<button class="btn sm primary" data-act="approve" data-id="${m.id}">Accepter</button>` : ''}
+        ${!m.verified ? `<button class="btn sm" data-act="verify" data-id="${m.id}">Vérifier</button>` : ''}
+        ${m.status !== 'rejected' ? `<button class="btn sm danger" data-act="reject" data-id="${m.id}">Refuser</button>` : ''}
+      </td>
+    </tr>`).join('');
+  body.querySelectorAll('button[data-act]').forEach(btn => {
+    btn.onclick = () => {
+      const m = members.find(x => x.id === btn.dataset.id);
+      if (!m) return;
+      if (btn.dataset.act === 'approve') { m.status = 'approved'; m.verified = true; }
+      if (btn.dataset.act === 'verify') { m.verified = true; }
+      if (btn.dataset.act === 'reject') { m.status = 'rejected'; }
+      saveMembers();
+      renderAdminPanel();
+    };
+  });
+}
+function gateAuth() {
+  refreshAuthPrice();
+  const gate = document.getElementById('authGate');
+  const app = document.getElementById('appRoot');
+  if (currentUser) {
+    const fresh = members.find(m => m.id === currentUser.id);
+    if (fresh) currentUser = { id: fresh.id, role: fresh.role, name: fresh.name, status: fresh.status };
+    else currentUser = null;
+  }
+  const ok = currentUser && (currentUser.role === 'admin' || currentUser.status === 'approved');
+  if (ok) {
+    gate.style.display = 'none';
+    app.style.display = 'block';
+    renderUserBar();
+    renderAdminPanel();
+    signalViews++;
+    localStorage.setItem(LS.signalViews, String(signalViews));
+    const me = members.find(m => m.id === currentUser.id);
+    if (me) { me.views = (me.views || 0) + 1; saveMembers(); }
+    if (typeof rescanLive === 'function') {
+      refreshTicker();
+      rescanLive();
+      if (!window._aresLiveStarted) {
+        window._aresLiveStarted = true;
+        setInterval(refreshTicker, CONFIG.tickerMs);
+        setInterval(rescanLive, CONFIG.rescanMs);
+      }
+    }
+  } else {
+    gate.style.display = 'block';
+    app.style.display = 'none';
+    if (currentUser && currentUser.status === 'pending') {
+      showAuth('Compte en attente de validation admin. Payez ' + (siteSettings.feeAr || 30000).toLocaleString('fr-FR') + ' Ar au ' + (siteSettings.paymentPhone || '—') + ' puis attendez.', true);
+    }
+  }
+}
+function initAuthUI() {
+  document.getElementById('tabLogin').onclick = () => {
+    document.getElementById('tabLogin').classList.add('on');
+    document.getElementById('tabRegister').classList.remove('on');
+    document.getElementById('formLogin').style.display = 'block';
+    document.getElementById('formRegister').style.display = 'none';
+    showAuth('');
+  };
+  document.getElementById('tabRegister').onclick = () => {
+    document.getElementById('tabRegister').classList.add('on');
+    document.getElementById('tabLogin').classList.remove('on');
+    document.getElementById('formLogin').style.display = 'none';
+    document.getElementById('formRegister').style.display = 'block';
+    showAuth('');
+  };
+  document.getElementById('btnLogin').onclick = () => {
+    const u = (document.getElementById('loginUser').value || '').trim().toLowerCase();
+    const p = document.getElementById('loginPass').value || '';
+    const m = members.find(x => (x.email || '').toLowerCase() === u || x.id === u);
+    if (!m || m.pass !== p) { showAuth('Identifiant ou mot de passe incorrect.'); return; }
+    saveSession(m);
+    if (m.role !== 'admin' && m.status !== 'approved') {
+      showAuth('Compte en attente de validation. Paiement : ' + (siteSettings.feeAr || 30000).toLocaleString('fr-FR') + ' Ar → ' + (siteSettings.paymentPhone || '—'), true);
+      return;
+    }
+    showAuth('Connexion OK', true);
+    gateAuth();
+  };
+  document.getElementById('btnRegister').onclick = () => {
+    const name = (document.getElementById('regName').value || '').trim();
+    const email = (document.getElementById('regEmail').value || '').trim().toLowerCase();
+    const phone = (document.getElementById('regPhone').value || '').trim();
+    const pass = document.getElementById('regPass').value || '';
+    if (!name || !email || !pass) { showAuth('Remplissez nom, email et mot de passe.'); return; }
+    if (members.some(m => (m.email || '').toLowerCase() === email)) { showAuth('Cet email est déjà inscrit.'); return; }
+    const id = 'u_' + Date.now();
+    members.push({ id, name, email, phone, pass, role: 'member', status: 'pending', verified: false, views: 0, createdAt: Date.now() });
+    saveMembers();
+    showAuth('Inscription OK. Payez ' + (siteSettings.feeAr || 30000).toLocaleString('fr-FR') + ' Ar au ' + (siteSettings.paymentPhone || '—') + ' puis attendez la validation admin.', true);
+    document.getElementById('tabLogin').click();
+    document.getElementById('loginUser').value = email;
+  };
+  document.getElementById('btnSaveSettings').onclick = () => {
+    if (!currentUser || currentUser.role !== 'admin') return;
+    siteSettings.feeAr = +document.getElementById('adminFee').value || 30000;
+    siteSettings.paymentPhone = document.getElementById('adminPhone').value.trim();
+    siteSettings.paymentNote = document.getElementById('adminPayNote').value.trim();
+    const tdKeyEl = document.getElementById('adminTwelveDataKey');
+    if (tdKeyEl && tdKeyEl.value.trim()) {
+      siteSettings.twelveDataKey = tdKeyEl.value.trim();
+      CONFIG.apiKey = siteSettings.twelveDataKey;
+    }
+    const tgEl = document.getElementById('adminTelegram');
+    if (tgEl) siteSettings.telegram = tgEl.value.trim();
+    saveSettings();
+    refreshAuthPrice();
+    alert('Paramètres enregistrés.');
+  };
+}
+function openAdminDrawer() {
+  renderAdminPanel();
+  document.getElementById('adminDrawer').classList.add('open');
+  document.getElementById('adminBackdrop').classList.add('open');
+}
+function closeAdminDrawer() {
+  const d = document.getElementById('adminDrawer');
+  const b = document.getElementById('adminBackdrop');
+  if (d) d.classList.remove('open');
+  if (b) b.classList.remove('open');
+}
+
+function safeParse(str, fb) { try { return str ? JSON.parse(str) : fb; } catch(e) { return fb; } }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function round2(x) { return Math.round(x * 100) / 100; }
+
+function trackCredit(n) {
+  const today = new Date().toISOString().slice(0,10);
+  let c = safeParse(localStorage.getItem(LS.credits), { date: today, used: 0 });
+  if (c.date !== today) c = { date: today, used: 0 };
+  c.used += n;
+  localStorage.setItem(LS.credits, JSON.stringify(c));
+  renderCredits(c);
+}
+function renderCredits(c) {
+  if (!c) c = safeParse(localStorage.getItem(LS.credits), { date:'', used:0 });
+  document.getElementById('creditsText').textContent = c.used + '/800 (aujourd\'hui)';
+}
+
+function updateMarketStatus() {
+  const now = new Date();
+  const day = now.getUTCDay(), h = now.getUTCHours();
+  let open = true;
+  if (day === 6) open = false;
+  else if (day === 0 && h < 22) open = false;
+  else if (day === 5 && h >= 22) open = false;
+  const pill = document.getElementById('marketPill');
+  pill.className = 'pill ' + (open ? 'open' : 'closed');
+  document.getElementById('marketPillText').textContent = open ? 'Marché ouvert' : 'Marché fermé';
+  return open;
+}
+
+async function td(endpoint, params) {
+  if (!CONFIG.apiKey) {
+    throw new Error('API TwelveData manquante. Ajoutez ARES_TWELVEDATA_KEY avant le lancement.');
+  }
+
+  const url = new URL('https://api.twelvedata.com/' + endpoint);
+  Object.entries(params || {}).forEach(([k,v]) => url.searchParams.set(k, v));
+  url.searchParams.set('apikey', CONFIG.apiKey);
+
+  let res;
+  try {
+    res = await fetch(url.toString(), { method: 'GET', cache: 'no-store' });
+  } catch (networkErr) {
+    throw new Error('Connexion TwelveData impossible (réseau/CORS).');
+  }
+
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error('Réponse TwelveData invalide.');
+  }
+
+  trackCredit(1);
+
+  if (!res.ok || data.status === 'error' || data.code >= 400) {
+    const msg = data && data.message ? data.message : ('HTTP ' + res.status);
+    throw new Error('TwelveData: ' + msg);
+  }
+
+  if (data && data.code === 429) {
+    throw new Error('Quota TwelveData atteint. Réduisez les appels ou utilisez un plan/API adapté.');
+  }
+
+  return data;
+}
+function toCandles(values) {
+  if (!values) return [];
+  return values.map(v => ({
+    time: new Date(v.datetime.replace(' ', 'T') + 'Z').getTime(),
+    open: +v.open, high: +v.high, low: +v.low, close: +v.close,
+    volume: v.volume != null ? +v.volume : 0
+  })).sort((a,b) => a.time - b.time);
+}
+function hasVolumeSpike(candles, idx, lookback) {
+  if (!candles[idx] || !candles[idx].volume) return false;
+  const start = Math.max(0, idx - (lookback || 20));
+  const slice = candles.slice(start, idx);
+  if (slice.length < 5) return false;
+  const avg = slice.reduce((s, c) => s + (c.volume || 0), 0) / slice.length;
+  if (avg <= 0) return false;
+  return candles[idx].volume >= avg * 1.4;
+}
+function hasDisplacement(candles, breakIdx, dir) {
+  const start = Math.max(0, breakIdx - 4);
+  for (let i = start; i <= breakIdx; i++) {
+    const c = candles[i];
+    const body = Math.abs(c.close - c.open);
+    const range = c.high - c.low || 1;
+    const bull = c.close > c.open;
+    if (body / range >= 0.55) {
+      if (dir === 'up' && bull) return true;
+      if (dir === 'down' && !bull) return true;
+    }
+  }
+  return false;
+}
+async function fetchMonthCandles(year, month) {
+  const start = `${year}-${String(month).padStart(2,'0')}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const end = `${year}-${String(month).padStart(2,'0')}-${lastDay} 23:59:59`;
+  const data = await td('time_series', { symbol: CONFIG.symbol, interval: CONFIG.interval, start_date: start, end_date: end, outputsize: 5000, order: 'ASC' });
+  return toCandles(data.values);
+}
+async function fetchLatestCandles(n, interval) {
+  const iv = interval || CONFIG.interval;
+  const data = await td('time_series', { symbol: CONFIG.symbol, interval: iv, outputsize: n, order: 'ASC' });
+  return toCandles(data.values);
+}
 async function fetchMultiTF() {
   const result = {};
+  const errors = [];
+
   for (const tf of CONFIG.timeframes) {
     try {
       result[tf.label] = await fetchLatestCandles(tf.candles, tf.interval);
-    } catch(e) { result[tf.label] = []; }
+    } catch (e) {
+      console.warn('TF ' + tf.label + ' error:', e.message);
+      result[tf.label] = [];
+      errors.push(tf.label + ': ' + e.message);
+    }
+    // Small pause to avoid bursting the free API quota.
+    await sleep(500);
   }
+
+  result.__errors = errors;
   return result;
 }
+async function fetchQuote() { return await td('quote', { symbol: CONFIG.symbol }); }
 
-async function fetchLatestCandles(n, interval) {
-  const data = await td('time_series', {symbol:CONFIG.symbol, interval, outputsize:n, order:'ASC'});
-  return toCandles(data.values);
+function findSwings(candles, lb) {
+  const highs = [], lows = [];
+  for (let i = lb; i < candles.length - lb; i++) {
+    const win = candles.slice(i - lb, i + lb + 1);
+    const c = candles[i];
+    if (c.high === Math.max(...win.map(w => w.high))) highs.push(i);
+    if (c.low === Math.min(...win.map(w => w.low))) lows.push(i);
+  }
+  return { highs, lows };
 }
 
-// Backtest optimisé (12 mois en 3 secondes)
+function detectFVG(candles, i) {
+  if (i < 2) return null;
+  const c1 = candles[i - 2], c3 = candles[i];
+  if (c1.high < c3.low) return { type: 'bull', top: c3.low, bottom: c1.high };
+  if (c1.low > c3.high) return { type: 'bear', top: c1.low, bottom: c3.high };
+  return null;
+}
+
+function fvgNearOB(candles, obIdx, dir) {
+  for (let k = Math.max(2, obIdx - 2); k <= Math.min(candles.length - 1, obIdx + 8); k++) {
+    const f = detectFVG(candles, k);
+    if (!f) continue;
+    if (dir === 'up' && f.type === 'bull') return f;
+    if (dir === 'down' && f.type === 'bear') return f;
+  }
+  return null;
+}
+
+function findOrderBlock(candles, breakIndex, dir) {
+  let best = null, bestBody = 0;
+  const start = Math.max(0, breakIndex - 25);
+  for (let i = breakIndex - 1; i >= start; i--) {
+    const c = candles[i];
+    const body = Math.abs(c.close - c.open);
+    const isBull = c.close > c.open;
+    if (dir === 'up' && !isBull && body >= bestBody) {
+      bestBody = body;
+      best = { index: i, high: c.high, low: c.low, open: c.open, close: c.close, body };
+    }
+    if (dir === 'down' && isBull && body >= bestBody) {
+      bestBody = body;
+      best = { index: i, high: c.high, low: c.low, open: c.open, close: c.close, body };
+    }
+  }
+  return best;
+}
+
+function detectSweep(candles, idx, level, dir) {
+  if (idx < 0 || idx >= candles.length) return false;
+  const c = candles[idx];
+  if (dir === 'up') return c.low < level && c.close > level;
+  return c.high > level && c.close < level;
+}
+
+function isPrimeSession(ts) {
+  const h = new Date(ts).getUTCHours();
+  return (h >= 7 && h <= 11) || (h >= 12 && h <= 16);
+}
+
+function inOTE(candles, breakIdx, ob, dir) {
+  if (breakIdx < 5) return false;
+  const impulse = candles.slice(Math.max(0, breakIdx - 15), breakIdx + 1);
+  const hi = Math.max(...impulse.map(c => c.high));
+  const lo = Math.min(...impulse.map(c => c.low));
+  const range = hi - lo;
+  if (range <= 0) return false;
+  const mid = (ob.high + ob.low) / 2;
+  if (dir === 'up') {
+    const retr = (hi - mid) / range;
+    return retr >= 0.55 && retr <= 0.85;
+  }
+  const retr = (mid - lo) / range;
+  return retr >= 0.55 && retr <= 0.85;
+}
+
+function inDiscountPremium(candles, breakIdx, ob, dir) {
+  const look = candles.slice(Math.max(0, breakIdx - 40), breakIdx + 1);
+  if (look.length < 10) return false;
+  const hi = Math.max(...look.map(c => c.high));
+  const lo = Math.min(...look.map(c => c.low));
+  const mid = (hi + lo) / 2;
+  const obMid = (ob.high + ob.low) / 2;
+  if (dir === 'up') return obMid <= mid;
+  return obMid >= mid;
+}
+
+function strongOB(ob, candles, breakIdx) {
+  if (!ob || !ob.body) return false;
+  const recent = candles.slice(Math.max(0, breakIdx - 20), breakIdx);
+  const avgBody = recent.reduce((s, c) => s + Math.abs(c.close - c.open), 0) / (recent.length || 1);
+  return ob.body >= avgBody * 0.8;
+}
+function isOBFresh(candles, ob, breakIdx, dir) {
+  if (!ob) return false;
+  for (let j = ob.index + 1; j < breakIdx; j++) {
+    const c = candles[j];
+    if (dir === 'up' && c.close < ob.low) return false;
+    if (dir === 'down' && c.close > ob.high) return false;
+  }
+  return true;
+}
+
+function scanSMC(candles, tfLabel) {
+  const tf = tfLabel || CONFIG.tfLabel;
+  const { highs, lows } = findSwings(candles, 3);
+  const signals = [];
+  let lastHighIdx = null, lastLowIdx = null, hIdx = 0, lIdx = 0;
+
+  for (let i = 8; i < candles.length; i++) {
+    while (hIdx < highs.length && highs[hIdx] < i) { lastHighIdx = highs[hIdx]; hIdx++; }
+    while (lIdx < lows.length && lows[lIdx] < i) { lastLowIdx = lows[lIdx]; lIdx++; }
+    const c = candles[i];
+
+    if (lastHighIdx != null && c.close > candles[lastHighIdx].high) {
+      const ob = findOrderBlock(candles, i, 'up');
+      if (ob) {
+        const fvg = fvgNearOB(candles, ob.index, 'up') || detectFVG(candles, i) || detectFVG(candles, i - 1);
+        const hasFVG = !!(fvg && fvg.type === 'bull');
+        const liqLevel = lastLowIdx != null ? candles[lastLowIdx].low : null;
+        const sweep = liqLevel != null ? detectSweep(candles, i - 1, liqLevel, 'up') : false;
+        const sweep2 = liqLevel != null && !sweep
+          ? detectSweep(candles, i - 2, liqLevel, 'up') || detectSweep(candles, i - 3, liqLevel, 'up')
+          : false;
+        const hasSweep = sweep || sweep2;
+        const ote = inOTE(candles, i, ob, 'up');
+        const sess = isPrimeSession(c.time);
+        const disc = inDiscountPremium(candles, i, ob, 'up');
+        const strong = strongOB(ob, candles, i);
+
+        const zoneLow = +ob.low.toFixed(2);
+        const zoneHigh = +ob.high.toFixed(2);
+        const entry = zoneHigh;
+        let slRaw = zoneLow;
+        if (hasSweep && liqLevel != null) slRaw = Math.min(zoneLow, liqLevel);
+        const sl = +(slRaw - CONFIG.slBuffer).toFixed(2);
+        const riskPts = +(entry - sl).toFixed(2);
+
+        const disp = hasDisplacement(candles, i, 'up');
+        const vol = hasVolumeSpike(candles, i, 20);
+        const fresh = isOBFresh(candles, ob, i, 'up');
+
+        if (CONFIG.requireSweep && !hasSweep) { lastHighIdx = null; continue; }
+        if (CONFIG.requireDispOrFVG && !(disp || hasFVG)) { lastHighIdx = null; continue; }
+        if (!fresh) { lastHighIdx = null; continue; }
+
+        let score = 48;
+        const parts = ['BOS', 'OB'];
+        score += 16;
+        if (hasSweep) { score += 22; parts.unshift('SH'); }
+        if (hasFVG)   { score += 14; parts.push('FVG'); }
+        if (ote)      { score += 12; parts.push('OTE'); }
+        if (sess)     { score += 10; parts.push('SESS'); }
+        if (disc)     { score += 6;  parts.push('DISC'); }
+        if (strong)   { score += 8;  parts.push('OB+'); }
+        if (disp)     { score += 12; parts.push('DISP'); }
+        if (vol)      { score += 8;  parts.push('VOL'); }
+        if (fresh)    { score += 4; }
+
+        const confCount = (hasSweep?1:0)+(hasFVG?1:0)+(ote?1:0)+(sess?1:0)+(disp?1:0)+(strong?1:0);
+        const riskOk = riskPts > 0 && riskPts <= CONFIG.maxRiskPts;
+
+        if (score >= CONFIG.minScore && confCount >= CONFIG.minConfCount && riskOk) {
+          signals.push({
+            dir: 'ACHAT', index: i, time: c.time, tf: tf,
+            entry, sl, zoneLow, zoneHigh,
+            score, type: parts.join('+'), confCount,
+            obIndex: ob.index, riskPts, hasSweep
+          });
+        }
+      }
+      lastHighIdx = null;
+    }
+
+    if (lastLowIdx != null && c.close < candles[lastLowIdx].low) {
+      const ob = findOrderBlock(candles, i, 'down');
+      if (ob) {
+        const fvg = fvgNearOB(candles, ob.index, 'down') || detectFVG(candles, i) || detectFVG(candles, i - 1);
+        const hasFVG = !!(fvg && fvg.type === 'bear');
+        const liqLevel = lastHighIdx != null ? candles[lastHighIdx].high : null;
+        const sweep = liqLevel != null ? detectSweep(candles, i - 1, liqLevel, 'down') : false;
+        const sweep2 = liqLevel != null && !sweep
+          ? detectSweep(candles, i - 2, liqLevel, 'down') || detectSweep(candles, i - 3, liqLevel, 'down')
+          : false;
+        const hasSweep = sweep || sweep2;
+        const ote = inOTE(candles, i, ob, 'down');
+        const sess = isPrimeSession(c.time);
+        const prem = inDiscountPremium(candles, i, ob, 'down');
+        const strong = strongOB(ob, candles, i);
+
+        const zoneLow = +ob.low.toFixed(2);
+        const zoneHigh = +ob.high.toFixed(2);
+        const entry = zoneLow;
+        let slRaw = zoneHigh;
+        if (hasSweep && liqLevel != null) slRaw = Math.max(zoneHigh, liqLevel);
+        const sl = +(slRaw + CONFIG.slBuffer).toFixed(2);
+        const riskPts = +(sl - entry).toFixed(2);
+
+        const disp = hasDisplacement(candles, i, 'down');
+        const vol = hasVolumeSpike(candles, i, 20);
+        const fresh = isOBFresh(candles, ob, i, 'down');
+
+        if (CONFIG.requireSweep && !hasSweep) { lastLowIdx = null; continue; }
+        if (CONFIG.requireDispOrFVG && !(disp || hasFVG)) { lastLowIdx = null; continue; }
+        if (!fresh) { lastLowIdx = null; continue; }
+
+        let score = 48;
+        const parts = ['BOS', 'OB'];
+        score += 16;
+        if (hasSweep) { score += 22; parts.unshift('SMS'); }
+        if (hasFVG)   { score += 14; parts.push('FVG'); }
+        if (ote)      { score += 12; parts.push('OTE'); }
+        if (sess)     { score += 10; parts.push('SESS'); }
+        if (prem)     { score += 6;  parts.push('PREM'); }
+        if (strong)   { score += 8;  parts.push('OB+'); }
+        if (disp)     { score += 12; parts.push('DISP'); }
+        if (vol)      { score += 8;  parts.push('VOL'); }
+        if (fresh)    { score += 4; }
+
+        const confCount = (hasSweep?1:0)+(hasFVG?1:0)+(ote?1:0)+(sess?1:0)+(disp?1:0)+(strong?1:0);
+        const riskOk = riskPts > 0 && riskPts <= CONFIG.maxRiskPts;
+
+        if (score >= CONFIG.minScore && confCount >= CONFIG.minConfCount && riskOk) {
+          signals.push({
+            dir: 'VENTE', index: i, time: c.time, tf: tf,
+            entry, sl, zoneLow, zoneHigh,
+            score, type: parts.join('+'), confCount,
+            obIndex: ob.index, riskPts, hasSweep
+          });
+        }
+      }
+      lastLowIdx = null;
+    }
+  }
+  return signals;
+}
+
+function withLevels(sig) {
+  const risk = Math.abs(sig.entry - sig.sl);
+  const mul = sig.dir === 'ACHAT' ? 1 : -1;
+  const allowTP3 = (sig.score || 0) >= CONFIG.highConfScore;
+  return {
+    ...sig, risk,
+    tp1: +(sig.entry + mul * risk * 1).toFixed(2),
+    tp2: +(sig.entry + mul * risk * 2).toFixed(2),
+    tp3: allowTP3 ? +(sig.entry + mul * risk * 3).toFixed(2) : null,
+    allowTP3
+  };
+}
+
+function simulateTrade(candles, sig) {
+  const s = withLevels(sig);
+  const isBuy = s.dir === 'ACHAT';
+  const zLo = s.zoneLow != null ? s.zoneLow : Math.min(s.entry, s.sl);
+  const zHi = s.zoneHigh != null ? s.zoneHigh : Math.max(s.entry, s.sl);
+  let entered = false, entryTime = null, stage = 0, sl = s.sl;
+  const maxStage = s.allowTP3 ? 3 : 2;
+
+  for (let j = s.index + 1; j < candles.length; j++) {
+    const c = candles[j];
+
+    if (!entered) {
+      const touchesZone = c.low <= zHi && c.high >= zLo;
+      const blownThrough = isBuy ? c.low <= s.sl : c.high >= s.sl;
+      if (touchesZone) { entered = true; entryTime = c.time; }
+      else if (blownThrough) {
+        return { ...s, result: 'INVALIDÉ', rr: 0, entered: false, entryTime: null, closeTime: c.time,
+          stage: 0, beActive: false, currentSL: s.sl, tp1Hit: false, tp2Hit: false, tp3Hit: false };
+      } else continue;
+    }
+
+    const worst = isBuy ? c.low : c.high;
+    const hitSL = isBuy ? worst <= sl : worst >= sl;
+    if (hitSL) {
+      let label, rr;
+      if (stage === 0) { label = 'SL'; rr = -1; }
+      else if (stage === 1) { label = 'TP1+BE'; rr = round2(0.5 * 1); }
+      else { label = 'TP1+TP2+BE'; rr = round2(0.5 * 1 + 0.5 * 2); }
+      return { ...s, result: label, rr, entered: true, entryTime, closeTime: c.time,
+        stage, beActive: stage >= 1, currentSL: sl,
+        tp1Hit: stage >= 1, tp2Hit: stage >= 2, tp3Hit: false };
+    }
+
+    const best = isBuy ? c.high : c.low;
+    const reached = (lvl) => lvl != null && (isBuy ? best >= lvl : best <= lvl);
+    if (stage === 0 && reached(s.tp1)) { stage = 1; sl = s.entry; }
+    if (stage === 1 && reached(s.tp2)) {
+      if (maxStage === 2) {
+        return { ...s, result: 'TP1+TP2', rr: round2(0.5 * 1 + 0.5 * 2), entered: true, entryTime, closeTime: c.time,
+          stage: 2, beActive: true, currentSL: s.entry, tp1Hit: true, tp2Hit: true, tp3Hit: false };
+      }
+      stage = 2; sl = s.tp1;
+    }
+    if (stage === 2 && reached(s.tp3)) {
+      return { ...s, result: 'TP1+TP2+TP3', rr: round2(0.33 * 1 + 0.33 * 2 + 0.34 * 3), entered: true, entryTime, closeTime: c.time,
+        stage: 3, beActive: true, currentSL: s.tp1, tp1Hit: true, tp2Hit: true, tp3Hit: true };
+    }
+  }
+
+  if (!entered) {
+    return { ...s, result: 'EN ATTENTE', rr: null, entered: false, entryTime: null, closeTime: null,
+      stage: 0, beActive: false, currentSL: s.sl, tp1Hit: false, tp2Hit: false, tp3Hit: false };
+  }
+  const label = stage === 0 ? 'ZONE TOUCHÉE' : (stage === 1 ? 'TP1 TOUCHÉ' : 'TP2 TOUCHÉ');
+  return { ...s, result: label, rr: null, entered: true, entryTime, closeTime: null,
+    stage, beActive: stage >= 1, currentSL: sl,
+    tp1Hit: stage >= 1, tp2Hit: stage >= 2, tp3Hit: false };
+}
+
+function aggregateMonthly(trades) {
+  const months = {};
+  trades.forEach(t => {
+    if (!t.entered || !t.closeTime || t.rr === null) return;
+    const d = new Date(t.time);
+    const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`;
+    if (!months[key]) months[key] = { trades: 0, tp: 0, sl: 0, be: 0, totalRR: 0 };
+    months[key].trades++;
+    months[key].totalRR += t.rr;
+    if (t.result === 'SL') months[key].sl++;
+    else if (t.result === 'TP1+TP2' || t.result === 'TP1+TP2+TP3') months[key].tp++;
+    else months[key].be++;
+  });
+  Object.values(months).forEach(m => {
+    m.winrate = m.trades ? Math.round(((m.tp + m.be) / m.trades) * 100) : 0;
+    m.totalRR = round2(m.totalRR);
+  });
+  return months;
+}
+function monthLabel(key) {
+  const [y, m] = key.split('-');
+  const names = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
+  return names[+m - 1] + ' ' + y;
+}
+function resultClass(r) {
+  if (r === 'SL') return 'res-sl';
+  if (r === 'TP1+TP2' || r === 'TP1+TP2+TP3') return 'res-tp';
+  return 'res-be';
+}
+
+function setStatus(msg) { document.getElementById('btStatus').textContent = msg; }
 async function runBacktest(sy, sm, ey, em) {
-  /* ... code identique mais avec fetch limitée ... */
+  if (btRunning) return;
+  btRunning = true;
+  document.getElementById('runBacktestBtn').disabled = true;
+  let all = [];
+  let y = sy, m = sm;
+  try {
+    while (y < ey || (y === ey && m <= em)) {
+      setStatus(`Chargement ${String(m).padStart(2,'0')}/${y}…`);
+      const candles = await fetchMonthCandles(y, m);
+      all = all.concat(candles);
+      m++; if (m > 12) { m = 1; y++; }
+      if (y < ey || (y === ey && m <= em)) await sleep(8000);
+    }
+    all.sort((a,b) => a.time - b.time);
+    setStatus('Analyse SMC sur ' + all.length + ' bougies…');
+    const raw = scanSMC(all);
+    const trades = raw.map(s => simulateTrade(all, s));
+    const monthly = aggregateMonthly(trades);
+    backtestData = { trades: trades.filter(t => t.entered && t.closeTime), monthly, range: { sy, sm, ey, em }, generatedAt: Date.now() };
+    localStorage.setItem(LS.backtest, JSON.stringify(backtestData));
+    setStatus(`Backtest terminé — ${backtestData.trades.length} trades entrés et clôturés sur ${Object.keys(monthly).length} mois.`);
+    selectedMonth = null;
+    renderBacktest();
+  } catch (e) {
+    setStatus('Erreur : ' + e.message);
+  } finally {
+    btRunning = false;
+    document.getElementById('runBacktestBtn').disabled = false;
+  }
+}
+function renderBacktest() {
+  const wrap = document.getElementById('backtestWrap');
+  if (!backtestData || !Object.keys(backtestData.monthly).length) {
+    wrap.innerHTML = '<div class="empty">Aucune donnée de backtest pour le moment.</div>';
+    return;
+  }
+  const months = Object.keys(backtestData.monthly).sort();
+  if (!selectedMonth || !months.includes(selectedMonth)) selectedMonth = months[months.length - 1];
+  const tabs = months.map(m => `<button class="month-tab ${m===selectedMonth?'active':''}" data-month="${m}">${monthLabel(m)}</button>`).join('');
+  const s = backtestData.monthly[selectedMonth];
+  wrap.innerHTML = `
+    <div class="month-tabs">${tabs}</div>
+    <div class="stats-grid" style="margin-top:12px">
+      <div class="stat"><div class="num">${s.trades}</div><div class="lbl">Trades</div></div>
+      <div class="stat"><div class="num" style="color:var(--bull)">${s.tp}</div><div class="lbl">TP1+2 / TP3</div></div>
+      <div class="stat"><div class="num" style="color:var(--bear)">${s.sl}</div><div class="lbl">SL</div></div>
+      <div class="stat"><div class="num" style="color:var(--warn)">${s.be}</div><div class="lbl">TPx+BE</div></div>
+      <div class="stat"><div class="num">${s.winrate}%</div><div class="lbl">Winrate</div></div>
+      <div class="stat"><div class="num" style="color:${s.totalRR>=0?'var(--bull)':'var(--bear)'}">${s.totalRR>0?'+':''}${s.totalRR}R</div><div class="lbl">RR Total</div></div>
+    </div>`;
+  wrap.querySelectorAll('.month-tab').forEach(btn => {
+    btn.addEventListener('click', () => { selectedMonth = btn.dataset.month; renderBacktest(); });
+  });
+}
+function exportCsv() {
+  if (!backtestData || !backtestData.trades.length) { setStatus('Rien à exporter — lancez un backtest d\'abord.'); return; }
+  const rows = [['Date','Type','Sens','Entry','SL','TP1','TP2','TP3','Résultat','RR','Score']];
+  backtestData.trades.forEach(t => rows.push([new Date(t.time).toISOString(), t.type, t.dir, t.entry, t.sl, t.tp1, t.tp2, t.tp3 ?? '', t.result, t.rr, t.score]));
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ares_backtest_' + Date.now() + '.csv';
+  a.click();
 }
 
-// (toutes les fonctions Gold sont ici avec les corrections)
+function riskSettings() {
+  const capital = +document.getElementById('capitalInput').value || 0;
+  const riskPct = +document.getElementById('riskInput').value || 0;
+  return { capital, riskPct, riskAmount: +(capital * riskPct / 100).toFixed(2) };
+}
+
+function scanAllTF(candlesByTF) {
+  let all = [];
+  let htfBias = null;
+  for (const lab of ['H1', 'M30']) {
+    const c = candlesByTF[lab] || [];
+    if (c.length >= 30) {
+      const raw = scanSMC(c, lab);
+      if (raw.length) { htfBias = raw[raw.length - 1].dir; break; }
+    }
+  }
+
+  for (const tf of CONFIG.timeframes) {
+    const candles = candlesByTF[tf.label] || [];
+    if (candles.length < 30) continue;
+    const raw = scanSMC(candles, tf.label);
+    raw.forEach(s => {
+      if (htfBias && s.dir === htfBias) {
+        s.score += CONFIG.htfAlignBonus;
+        if (!s.type.includes('HTF')) s.type = s.type + '+HTF';
+        s.htfAlign = true;
+      } else if (htfBias && s.dir !== htfBias) {
+        s.score -= (CONFIG.htfAgainstPenalty || 20);
+        s.againstHTF = true;
+      }
+      if (tf.label === 'H1') s.score += 6;
+      if (tf.label === 'M30') s.score += 3;
+      s._candles = candles;
+      all.push(s);
+    });
+  }
+  all.sort((a, b) => b.score - a.score);
+  return all;
+}
+
+function getAllSimSignals(candlesByTF) {
+  if (Array.isArray(candlesByTF)) {
+    candlesByTF = { [CONFIG.tfLabel]: candlesByTF };
+  }
+  const all = scanAllTF(candlesByTF);
+  const buys = all.filter(s => s.dir === 'ACHAT');
+  const sells = all.filter(s => s.dir === 'VENTE');
+
+  const buyRaw = buys[0] || null;
+  const sellRaw = sells[0] || null;
+  const buySig = buyRaw ? simulateTrade(buyRaw._candles || candlesByTF[buyRaw.tf] || [], buyRaw) : null;
+  const sellSig = sellRaw ? simulateTrade(sellRaw._candles || candlesByTF[sellRaw.tf] || [], sellRaw) : null;
+
+  const both = [buySig, sellSig].filter(Boolean);
+  if (buySig && sellSig) {
+    const dist = Math.abs(buySig.entry - sellSig.entry);
+    if (dist < CONFIG.minOppositeDist) {
+      if (buySig.score >= sellSig.score) sellSig.cancelled = true;
+      else buySig.cancelled = true;
+    } else if (buySig.entryTime && sellSig.entryTime) {
+      if (buySig.entryTime < sellSig.entryTime) { sellSig.result = 'ANNULÉ'; sellSig.cancelled = true; }
+      else if (sellSig.entryTime < buySig.entryTime) { buySig.result = 'ANNULÉ'; buySig.cancelled = true; }
+    }
+  }
+  return both;
+}
+
+function getDualSignals(candlesByTF) {
+  const list = getAllSimSignals(candlesByTF).filter(s => {
+    if (s.cancelled) return false;
+    if (s.againstHTF) return false;
+    if (s.score < CONFIG.minScore) return false;
+    if (s.result === 'SL' || s.result === 'INVALIDÉ') return false;
+    if (s.closeTime && (s.result === 'TP1+TP2' || s.result === 'TP1+TP2+TP3' || s.result === 'TP1+BE' || s.result === 'TP1+TP2+BE')) return false;
+    return true;
+  });
+  list.sort((a, b) => b.score - a.score);
+  if (CONFIG.onlyBestSignal) return list.slice(0, 1);
+  return list.slice(0, 2);
+}
+
+function signalStatusInfo(sig) {
+  if (sig.cancelled) return { cls: 'cancelled', label: 'Annulé — autre zone prioritaire' };
+  if (!sig.entered) return { cls: 'pending', label: 'En attente (zone non touchée)' };
+  if (sig.closeTime) return { cls: 'closed', label: 'Clôturé — ' + sig.result };
+  if (sig.stage >= 2) return { cls: 'active', label: 'TP2 touché' + (sig.beActive ? ' · BE active' : '') };
+  if (sig.stage >= 1) return { cls: 'active', label: 'TP1 touché · BE active' };
+  return { cls: 'active', label: 'Zone touchée' };
+}
+
+function renderSignal(signals) {
+  const box = document.getElementById('signalBox');
+  if (!signals || !signals.length) {
+    box.innerHTML = `<div class="empty">Aucun setup SMC assuré pour le moment.<br>Setup ASSURÉ uniquement : BOS+OB+SH/SMS + (FVG ou DISP) · ≥${CONFIG.minConfCount} conf · Score ≥ ${CONFIG.minScore} · aligné HTF</div>`;
+    document.getElementById('aiText').textContent = "En attente d'un setup SMC COMPLET (BOS + OB + FVG/Liquidity/OTE/Session) sur les 300 dernières bougies " + CONFIG.tfLabel + ".";
+    return;
+  }
+  const rs = riskSettings();
+  box.innerHTML = signals.map(t => {
+    const dirClass = t.dir === 'ACHAT' ? 'buy' : 'sell';
+    const st = signalStatusInfo(t);
+    const rrTxt = (t.rr === null || t.rr === undefined) ? '—' : (t.rr > 0 ? '+' + t.rr + 'R' : t.rr + 'R');
+    const zLo = t.zoneLow != null ? t.zoneLow : t.entry;
+    const zHi = t.zoneHigh != null ? t.zoneHigh : t.entry;
+    const curSL = t.currentSL != null ? t.currentSL : t.sl;
+    const slLbl = t.beActive ? 'SL → BE active' : (t.hasSweep ? 'SL (beyond liq.)' : 'Stop Loss');
+    const tp1Lbl = t.tp1Hit ? '✓ TP1 touché' : 'TP1 (1R)';
+    const tp2Lbl = t.tp2Hit ? '✓ TP2 touché' : 'TP2 (2R) ★';
+    const tp3Html = t.tp3 != null
+      ? `<div class="level tp"><div class="lbl">${t.tp3Hit ? '✓ TP3 touché' : 'TP3 (3R) ★'}</div><div class="val">${t.tp3.toFixed(2)}</div></div>`
+      : `<div class="level"><div class="lbl">TP3</div><div class="val" style="color:var(--muted);font-size:11px">Off (score &lt; ${CONFIG.highConfScore})</div></div>`;
+    return `
+    <div class="signal-box status-${st.cls}">
+      <span class="signal-status ${st.cls}">${st.label}</span>
+      <div class="signal-dir ${dirClass}">${t.dir === 'ACHAT' ? '▲ ACHAT (LIMIT)' : '▼ VENTE (LIMIT)'}<span class="signal-type">${t.type}</span></div>
+      <div class="levels">
+        <div class="level entry"><div class="lbl">TF</div><div class="val" style="color:var(--cyan)">${t.tf || CONFIG.tfLabel}</div></div>
+        <div class="level entry"><div class="lbl">Zone OB (entry)</div><div class="val" style="color:var(--cyan)">${zLo.toFixed(2)} – ${zHi.toFixed(2)}</div></div>
+        <div class="level entry"><div class="lbl">Entry (extrémité)</div><div class="val">${t.entry.toFixed(2)}</div></div>
+        <div class="level sl"><div class="lbl">${slLbl}</div><div class="val">${(+curSL).toFixed(2)}</div></div>
+        <div class="level tp"><div class="lbl">${tp1Lbl}</div><div class="val">${t.tp1.toFixed(2)}</div></div>
+        <div class="level tp"><div class="lbl">${tp2Lbl}</div><div class="val">${t.tp2.toFixed(2)}</div></div>
+        ${tp3Html}
+        <div class="level"><div class="lbl">Risque</div><div class="val">${t.risk.toFixed(2)} pts</div></div>
+      </div>
+      <div class="meta-row">
+        <div class="meta">TF <b>${t.tf || CONFIG.tfLabel}</b></div>
+        <div class="meta">Score <b>${t.score}</b></div>
+        <div class="meta">RR réalisé <b>${rrTxt}</b></div>
+        <div class="meta">Risque suggéré <b>${rs.riskAmount}$</b> (${rs.riskPct}% de ${rs.capital}$)</div>
+      </div>
+      <div class="prob-bar"><div class="prob-fill" style="width:${Math.min(100,t.score)}%"></div></div>
+    </div>`;
+  }).join('');
+
+  const primary = signals.find(s => s.entered && !s.closeTime) || signals[0];
+  const aiTexts = {
+    'SH': "SH + BOS + OB (PDF). Liquidité SSL balayée → retour sur Order Block haussier. Setup institutionnel fort.",
+    'SMS': "SMS + BOS + OB (PDF). Failure Swing + cassure structure → retour sur Order Block baissier.",
+    'BOS': "BOS + Order Block confirmé. Confluences FVG / OTE / Session renforcent la qualité."
+  };
+  const key = Object.keys(aiTexts).find(k => primary.type.includes(k));
+  let extra = "";
+  if (primary.allowTP3) extra = " Score ≥ " + CONFIG.highConfScore + " → TP3 autorisé.";
+  else extra = " TP principal = TP2 (TP3 si score ≥ " + CONFIG.highConfScore + ").";
+  if (primary.type.includes('FVG')) extra += " FVG en confluence.";
+  if (primary.type.includes('OTE')) extra += " Zone OTE (0.62-0.79).";
+  if (signals.length === 2) extra += " Deux zones — première touchée gagne.";
+  document.getElementById('aiText').textContent = (aiTexts[key] || "Setup SMC COMPLET (BOS+OB+confluences) détecté.") + extra;
+}
+
+function renderZonesFromCandles(candlesByTF) {
+  if (Array.isArray(candlesByTF)) candlesByTF = { [CONFIG.tfLabel]: candlesByTF };
+  const zones = [];
+  let lastPrice = 0;
+
+  for (const tf of CONFIG.timeframes) {
+    const candles = candlesByTF[tf.label] || [];
+    if (candles.length < 10) continue;
+    lastPrice = candles[candles.length - 1].close;
+    const { highs, lows } = findSwings(candles, 3);
+    highs.slice(-2).forEach(i => zones.push({
+      type: 'Liquidité (BSL)', dir: 'bear', price: candles[i].high, tf: tf.label
+    }));
+    lows.slice(-2).forEach(i => zones.push({
+      type: 'Liquidité (SSL)', dir: 'bull', price: candles[i].low, tf: tf.label
+    }));
+    for (let i = Math.max(2, candles.length - 40); i < candles.length; i++) {
+      const f = detectFVG(candles, i);
+      if (f) zones.push({
+        type: 'FVG', dir: f.type === 'bull' ? 'bull' : 'bear',
+        price: (f.top + f.bottom) / 2, tf: tf.label
+      });
+    }
+  }
+  if (!lastPrice && zones.length) lastPrice = zones[0].price;
+  zones.forEach(z => {
+    z.score = Math.max(50, 100 - Math.round(Math.abs(z.price - lastPrice) / lastPrice * 2000));
+  });
+  zones.sort((a, b) => Math.abs(a.price - lastPrice) - Math.abs(b.price - lastPrice));
+  const top = zones.slice(0, 8);
+  const list = document.getElementById('zonesList');
+  if (!top.length) { list.innerHTML = '<div class="empty">Aucune zone détectée</div>'; return; }
+  list.innerHTML = top.map(z => `
+    <div class="zone ${z.dir}">
+      <div class="z-info"><div class="z-type">${z.type} · ${z.dir === 'bull' ? 'Haussier' : 'Baissier'} · <span style="color:var(--cyan)">${z.tf || ''}</span></div><div class="z-price">${z.price.toFixed(2)}</div></div>
+      <div class="z-score">${z.score}%</div>
+    </div>`).join('');
+}
+
+function renderEntryLog() {
+  const el = document.getElementById('entryLog');
+  if (!entryLog.length) { el.innerHTML = '<div class="empty">Aucune entrée touchée pour le moment</div>'; return; }
+  el.innerHTML = entryLog.slice(0, 30).map(e => `
+    <div class="entry-log-item">
+      <span><span class="el-dir ${e.dir==='ACHAT'?'buy':'sell'}">${e.dir}</span> touché @ ${e.entry.toFixed(2)} <span style="color:var(--cyan)">${e.tf || ''}</span> <span style="color:var(--muted)">(${e.type})</span></span>
+      <span class="el-time">${new Date(e.time).toLocaleDateString()} ${new Date(e.time).toLocaleTimeString().slice(0,5)}</span>
+    </div>`).join('');
+}
+
+function renderHistory() {
+  const body = document.getElementById('histBody');
+  if (!liveHistory.length) { body.innerHTML = '<tr><td colspan="5" class="empty">Aucun trade encore</td></tr>'; return; }
+  body.innerHTML = liveHistory.slice(0, 30).map(h => `
+    <tr>
+      <td>${new Date(h.time).toLocaleDateString()} ${new Date(h.time).toLocaleTimeString().slice(0,5)}</td>
+      <td>${h.type}</td><td>${h.dir}</td>
+      <td class="${resultClass(h.result)}">${h.result}</td>
+      <td>${h.rr > 0 ? '+' + h.rr : h.rr}R</td>
+    </tr>`).join('');
+}
+
+function logLiveTrade(t) {
+  if (liveHistory.some(h => h.time === t.time && h.dir === t.dir)) return;
+  liveHistory.unshift({ time: t.time, type: t.type, dir: t.dir, result: t.result, rr: t.rr });
+  liveHistory = liveHistory.slice(0, 100);
+  localStorage.setItem(LS.liveHistory, JSON.stringify(liveHistory));
+  renderHistory();
+}
+
+function checkNewEntries(newSignals) {
+  newSignals.forEach(sig => {
+    const key = sig.dir + '_' + sig.time;
+    const prev = prevActiveSignals.find(p => (p.dir + '_' + p.time) === key);
+    const wasEntered = prev && prev.entered;
+    if (sig.entered && !wasEntered) {
+      entryLog.unshift({ time: sig.entryTime, dir: sig.dir, entry: sig.entry, type: sig.type, tf: sig.tf });
+      entryLog = entryLog.slice(0, 50);
+      localStorage.setItem(LS.entryLog, JSON.stringify(entryLog));
+    }
+    if (sig.closeTime && sig.entered) {
+      const wasClosed = prev && prev.closeTime;
+      if (!wasClosed) logLiveTrade(sig);
+    }
+  });
+  prevActiveSignals = newSignals.map(s => ({ dir: s.dir, time: s.time, entered: s.entered, closeTime: s.closeTime }));
+  localStorage.setItem(LS.activeSignals, JSON.stringify(prevActiveSignals));
+  renderEntryLog();
+}
+
+async function refreshTicker() {
+  try {
+    const q = await fetchQuote();
+    const price = +q.close, change = +q.change, pct = +q.percent_change;
+    document.getElementById('tickerPrice').textContent = price.toFixed(2);
+    const chEl = document.getElementById('tickerChange');
+    const sign = change > 0 ? '+' : '';
+    chEl.textContent = `${sign}${change.toFixed(2)} (${sign}${pct.toFixed(2)}%)`;
+    chEl.className = 'ticker-change ' + (change > 0 ? 'up' : change < 0 ? 'down' : 'flat');
+    document.getElementById('liveDot').className = 'live-dot';
+    document.getElementById('liveStatus').textContent = 'Live · ' + new Date().toLocaleTimeString();
+  } catch (e) {
+    document.getElementById('liveDot').className = 'live-dot off';
+    document.getElementById('liveStatus').textContent = 'Erreur API';
+  }
+  updateMarketStatus();
+}
+
+async function rescanLive() {
+  try {
+    liveCandlesByTF = await fetchMultiTF();
+
+    const apiErrors = liveCandlesByTF.__errors || [];
+    const missingTF = CONFIG.timeframes
+      .filter(tf => !liveCandlesByTF[tf.label] || !liveCandlesByTF[tf.label].length)
+      .map(tf => tf.label);
+
+    liveCandles = liveCandlesByTF['M15'] || liveCandlesByTF['M5'] || [];
+
+    if (missingTF.length) {
+      document.getElementById('liveDot').className = 'live-dot off';
+      document.getElementById('liveStatus').textContent = 'API incomplète';
+
+      document.getElementById('signalBox').innerHTML =
+        `<div class="empty">
+          Données indisponibles pour : <b>${missingTF.join(', ')}</b><br>
+          ${apiErrors.join('<br>')}
+        </div>`;
+      return;
+    }
+
+    const allSim = getAllSimSignals(liveCandlesByTF);
+    checkNewEntries(allSim);
+    const signals = getDualSignals(liveCandlesByTF);
+    renderZonesFromCandles(liveCandlesByTF);
+    renderSignal(signals);
+  } catch (e) {
+    document.getElementById('liveDot').className = 'live-dot off';
+    document.getElementById('liveStatus').textContent = 'Erreur API';
+    document.getElementById('signalBox').innerHTML =
+      `<div class="empty">Erreur API : ${e.message}</div>`;
+  }
+}
+
+document.getElementById('runBacktestBtn').addEventListener('click', () => {
+  const sv = document.getElementById('btStart').value;
+  const ev = document.getElementById('btEnd').value;
+  if (!sv || !ev) { setStatus('Choisissez une période valide.'); return; }
+  const [sy, sm] = sv.split('-').map(Number);
+  const [ey, em] = ev.split('-').map(Number);
+  if (sy > ey || (sy === ey && sm > em)) { setStatus('La date de fin doit être après le début.'); return; }
+  runBacktest(sy, sm, ey, em);
+});
+document.getElementById('exportCsvBtn').addEventListener('click', exportCsv);
+document.getElementById('capitalInput').addEventListener('change', () => rescanLive());
+document.getElementById('riskInput').addEventListener('change', () => rescanLive());
+</script>
+
+<script>
+/* ===================== PANEL SYNTHETIC — Deriv API + Mean Reversion (M5+M15) ===================== */
+const DERIV_APP_ID = 1089;
+const SYN_INSTRUMENTS = {
+  vol100: { symbol: 'R_100', label: 'Volatility 100', tv: 'DERIV:VOLATILITY_100_INDEX' },
+  vol75:  { symbol: 'R_75',  label: 'Volatility 75',  tv: 'DERIV:VOLATILITY_75_INDEX' }
+};
+const SYN_TFS = [
+  { label: 'M5',  granularity: 300, liveCandles: 300 },
+  { label: 'M15', granularity: 900, liveCandles: 300 }
+];
+const SYN_PARAMS = {
+  bbPeriod: 20, bbStdDev: 2,
+  rsiPeriod: 14, rsiOB: 70, rsiOS: 30,
+  atrPeriod: 14, slAtrMult: 1.5, tp1AtrMult: 1.5, tp2AtrMult: 3
+};
+const SYN_LS = { hist: k => 'ares_syn_hist_' + k, bt: k => 'ares_syn_bt_' + k };
+let synHistory = {
+  vol100: safeParse(localStorage.getItem(SYN_LS.hist('vol100')), []),
+  vol75:  safeParse(localStorage.getItem(SYN_LS.hist('vol75')), [])
+};
+let synBacktestData = {
+  vol100: safeParse(localStorage.getItem(SYN_LS.bt('vol100')), null),
+  vol75:  safeParse(localStorage.getItem(SYN_LS.bt('vol75')), null)
+};
+let synSelectedMonth = { vol100: null, vol75: null };
+let synWS = null;
+let synTVLoaded = { vol100: false, vol75: false };
+let synLiveStarted = false;
+
+function synDerivConnect() {
+  return new Promise((resolve, reject) => {
+    if (synWS && synWS.readyState === 1) { resolve(synWS); return; }
+    const ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${DERIV_APP_ID}`);
+    ws.onopen = () => { synWS = ws; resolve(ws); };
+    ws.onerror = e => reject(e);
+  });
+}
+function synDerivRequest(ws, req) {
+  return new Promise((resolve, reject) => {
+    const reqId = Date.now() + Math.random();
+    req = { ...req, req_id: reqId };
+    const handler = (msg) => {
+      const data = JSON.parse(msg.data);
+      if (data.req_id === reqId) {
+        ws.removeEventListener('message', handler);
+        if (data.error) reject(new Error(data.error.message));
+        else resolve(data);
+      }
+    };
+    ws.addEventListener('message', handler);
+    ws.send(JSON.stringify(req));
+  });
+}
+async function synFetchCandles(symbol, count, granularity) {
+  const ws = await synDerivConnect();
+  const res = await synDerivRequest(ws, {
+    ticks_history: symbol, adjust_start_time: 1, count: count || 300,
+    end: 'latest', style: 'candles', granularity
+  });
+  return (res.candles || []).map(c => ({
+    time: c.epoch * 1000, open: +c.open, high: +c.high, low: +c.low, close: +c.close
+  })).sort((a,b) => a.time - b.time);
+}
+async function synFetchQuote(symbol) {
+  const ws = await synDerivConnect();
+  const res = await synDerivRequest(ws, { ticks: symbol, subscribe: 0 });
+  return +res.tick.quote;
+}
+
+function synSMA(v, p) {
+  const o = new Array(v.length).fill(null);
+  for (let i = p - 1; i < v.length; i++) { let s = 0; for (let j = i-p+1; j<=i; j++) s += v[j]; o[i] = s/p; }
+  return o;
+}
+function synStdDev(v, p, m) {
+  const o = new Array(v.length).fill(null);
+  for (let i = p - 1; i < v.length; i++) {
+    if (m[i] == null) continue;
+    let s = 0; for (let j = i-p+1; j<=i; j++) s += (v[j]-m[i])**2;
+    o[i] = Math.sqrt(s/p);
+  }
+  return o;
+}
+function synBollinger(candles) {
+  const cl = candles.map(c => c.close);
+  const mid = synSMA(cl, SYN_PARAMS.bbPeriod);
+  const dev = synStdDev(cl, SYN_PARAMS.bbPeriod, mid);
+  return candles.map((c,i) => ({
+    mid: mid[i],
+    upper: mid[i] != null ? mid[i] + dev[i]*SYN_PARAMS.bbStdDev : null,
+    lower: mid[i] != null ? mid[i] - dev[i]*SYN_PARAMS.bbStdDev : null
+  }));
+}
+function synRSI(candles) {
+  const cl = candles.map(c => c.close);
+  const p = SYN_PARAMS.rsiPeriod;
+  const rsi = new Array(cl.length).fill(null);
+  if (cl.length <= p) return rsi;
+  let g=0,l=0;
+  for (let i=1;i<=p;i++){ const d=cl[i]-cl[i-1]; if(d>=0) g+=d; else l-=d; }
+  let ag=g/p, al=l/p;
+  rsi[p] = al===0 ? 100 : 100-100/(1+ag/al);
+  for (let i=p+1;i<cl.length;i++){
+    const d = cl[i]-cl[i-1];
+    ag = (ag*(p-1)+Math.max(d,0))/p;
+    al = (al*(p-1)+Math.max(-d,0))/p;
+    rsi[i] = al===0 ? 100 : 100-100/(1+ag/al);
+  }
+  return rsi;
+}
+function synATR(candles) {
+  const p = SYN_PARAMS.atrPeriod;
+  const tr = candles.map((c,i) => i===0 ? c.high-c.low : Math.max(
+    c.high-c.low, Math.abs(c.high-candles[i-1].close), Math.abs(c.low-candles[i-1].close)
+  ));
+  const atr = new Array(candles.length).fill(null);
+  if (candles.length <= p) return atr;
+  let s=0; for (let i=0;i<p;i++) s+=tr[i];
+  atr[p-1]=s/p;
+  for (let i=p;i<candles.length;i++) atr[i]=(atr[i-1]*(p-1)+tr[i])/p;
+  return atr;
+}
+
+function synScan(candles, tfLabel) {
+  const bb = synBollinger(candles), rsi = synRSI(candles), atr = synATR(candles);
+  const signals = [];
+  const start = SYN_PARAMS.bbPeriod + SYN_PARAMS.rsiPeriod + 2;
+  for (let i=start; i<candles.length; i++) {
+    if (bb[i].upper==null || rsi[i]==null || atr[i]==null) continue;
+    const c = candles[i];
+    let dir = null;
+    if (c.low <= bb[i].lower && rsi[i] <= SYN_PARAMS.rsiOS) dir = 'ACHAT';
+    else if (c.high >= bb[i].upper && rsi[i] >= SYN_PARAMS.rsiOB) dir = 'VENTE';
+    if (!dir) continue;
+    const entry = +c.close.toFixed(4);
+    const a = atr[i];
+    const sl = dir==='ACHAT' ? +(entry-a*SYN_PARAMS.slAtrMult).toFixed(4) : +(entry+a*SYN_PARAMS.slAtrMult).toFixed(4);
+    const tp1 = dir==='ACHAT' ? +(entry+a*SYN_PARAMS.tp1AtrMult).toFixed(4) : +(entry-a*SYN_PARAMS.tp1AtrMult).toFixed(4);
+    const tp2 = dir==='ACHAT' ? +(entry+a*SYN_PARAMS.tp2AtrMult).toFixed(4) : +(entry-a*SYN_PARAMS.tp2AtrMult).toFixed(4);
+    signals.push({ dir, tf: tfLabel, time: c.time, index: i, entry, sl, tp1, tp2,
+      risk: Math.abs(entry-sl), rsi: +rsi[i].toFixed(1) });
+  }
+  return signals;
+}
+function synSimulate(candles, sig) {
+  const isBuy = sig.dir === 'ACHAT';
+  let stage = 0, sl = sig.sl;
+  for (let j=sig.index+1; j<candles.length; j++) {
+    const c = candles[j];
+    const worst = isBuy ? c.low : c.high;
+    const hitSL = isBuy ? worst<=sl : worst>=sl;
+    if (hitSL) {
+      const label = stage===0 ? 'SL' : 'TP1+BE';
+      const rr = stage===0 ? -1 : 0.5;
+      return { ...sig, result: label, rr, entered: true, closeTime: c.time, stage, currentSL: sl };
+    }
+    const best = isBuy ? c.high : c.low;
+    const reach = lvl => isBuy ? best>=lvl : best<=lvl;
+    if (stage===0 && reach(sig.tp1)) { stage=1; sl=sig.entry; }
+    if (stage===1 && reach(sig.tp2)) {
+      return { ...sig, result: 'TP1+TP2', rr: round2(0.5*1+0.5*2), entered: true, closeTime: c.time, stage:2, currentSL: sig.tp1 };
+    }
+  }
+  const label = stage===0 ? 'EN COURS' : 'TP1 TOUCHÉ (en cours)';
+  return { ...sig, result: label, rr: null, entered: true, closeTime: null, stage, currentSL: sl };
+}
+
+async function synGetLiveSignal(instKey) {
+  const symbol = SYN_INSTRUMENTS[instKey].symbol;
+  const candidates = [];
+  for (const tf of SYN_TFS) {
+    try {
+      const candles = await synFetchCandles(symbol, tf.liveCandles, tf.granularity);
+      const raw = synScan(candles, tf.label);
+      if (!raw.length) continue;
+      const last = raw[raw.length - 1];
+      candidates.push(synSimulate(candles, last));
+    } catch (e) { console.warn('SYN TF error', tf.label, e.message); }
+  }
+  const open = candidates.filter(c => !c.closeTime);
+  if (open.length === 0) return candidates.slice(-1);
+  if (open.length === 1) return open;
+  open.sort((a,b) => a.time - b.time);
+  open[1].cancelled = true;
+  return open;
+}
+function synStatusInfo(sig) {
+  if (sig.cancelled) return { cls:'cancelled', label:'Annulé — autre TF entré en premier' };
+  if (sig.closeTime) return { cls:'closed', label:'Clôturé — ' + sig.result };
+  if (sig.stage >= 1) return { cls:'active', label:'TP1 touché · BE active' };
+  return { cls:'active', label:'Position ouverte' };
+}
+function synRenderSignal(instKey, signals) {
+  const box = document.getElementById('syn_'+instKey+'_signalBox');
+  const aiEl = document.getElementById('syn_'+instKey+'_aiText');
+  if (!signals || !signals.length) {
+    box.innerHTML = '<div class="empty">Aucun signal pour le moment.</div>';
+    aiEl.textContent = "En attente d'un touch Bollinger + confirmation RSI sur M5 ou M15.";
+    return;
+  }
+  box.innerHTML = signals.map(t => {
+    const dirClass = t.dir==='ACHAT' ? 'buy' : 'sell';
+    const st = synStatusInfo(t);
+    const rrTxt = (t.rr==null) ? '—' : (t.rr>0 ? '+'+t.rr+'R' : t.rr+'R');
+    return `
+    <div class="signal-box status-${st.cls}">
+      <span class="signal-status ${st.cls}">${st.label}</span>
+      <div class="signal-dir ${dirClass}">${t.dir==='ACHAT'?'▲ ACHAT':'▼ VENTE'}<span class="signal-type">${t.tf} · RSI ${t.rsi}</span></div>
+      <div class="levels">
+        <div class="level entry"><div class="lbl">Entry</div><div class="val">${t.entry}</div></div>
+        <div class="level sl"><div class="lbl">${t.stage>=1?'SL → BE':'Stop Loss'}</div><div class="val">${t.currentSL ?? t.sl}</div></div>
+        <div class="level tp"><div class="lbl">${t.stage>=1?'✓ TP1':'TP1'}</div><div class="val">${t.tp1}</div></div>
+        <div class="level tp"><div class="lbl">${t.stage>=2?'✓ TP2':'TP2'}</div><div class="val">${t.tp2}</div></div>
+      </div>
+      <div class="meta-row">
+        <div class="meta">TF <b>${t.tf}</b></div>
+        <div class="meta">RR <b>${rrTxt}</b></div>
+      </div>
+    </div>`;
+  }).join('');
+  const primary = signals.find(s => !s.closeTime && !s.cancelled) || signals[0];
+  aiEl.textContent = primary.dir==='ACHAT'
+    ? `Touch bande basse (${primary.tf}) + RSI ${primary.rsi}. Mean-reversion statistique — pas de garantie.`
+    : `Touch bande haute (${primary.tf}) + RSI ${primary.rsi}. Mean-reversion statistique — pas de garantie.`;
+}
+function synLogHistory(instKey, sig) {
+  if (!sig.closeTime) return;
+  const key = sig.tf+'_'+sig.time;
+  if (synHistory[instKey].some(h => h.key===key)) return;
+  synHistory[instKey].unshift({ key, time: sig.time, tf: sig.tf, dir: sig.dir, result: sig.result, rr: sig.rr });
+  synHistory[instKey] = synHistory[instKey].slice(0,100);
+  localStorage.setItem(SYN_LS.hist(instKey), JSON.stringify(synHistory[instKey]));
+  synRenderHistory(instKey);
+}
+function synRenderHistory(instKey) {
+  const body = document.getElementById('syn_'+instKey+'_histBody');
+  const list = synHistory[instKey];
+  if (!list.length) { body.innerHTML = '<tr><td colspan="5" class="empty">Aucun trade encore</td></tr>'; return; }
+  body.innerHTML = list.slice(0,30).map(h => `
+    <tr><td>${new Date(h.time).toLocaleDateString()} ${new Date(h.time).toLocaleTimeString().slice(0,5)}</td>
+    <td>${h.tf}</td><td>${h.dir}</td><td class="${resultClass(h.result)}">${h.result}</td>
+    <td>${h.rr>0?'+'+h.rr:h.rr}R</td></tr>`).join('');
+}
+async function synRescanLive(instKey) {
+  try {
+    const signals = await synGetLiveSignal(instKey);
+    signals.forEach(s => synLogHistory(instKey, s));
+    synRenderSignal(instKey, signals);
+    const q = await synFetchQuote(SYN_INSTRUMENTS[instKey].symbol);
+    document.getElementById('syn_'+instKey+'_price').textContent = q.toFixed(2);
+  } catch (e) {
+    document.getElementById('syn_'+instKey+'_signalBox').innerHTML = `<div class="empty">Erreur : ${e.message}</div>`;
+  }
+}
+async function synRunBacktest(instKey) {
+  const symbol = SYN_INSTRUMENTS[instKey].symbol;
+  const count = Math.min(5000, +document.getElementById('syn_'+instKey+'_btCount').value || 4000);
+  const statusEl = document.getElementById('syn_'+instKey+'_btStatus');
+  const btn = document.getElementById('syn_'+instKey+'_runBt');
+  btn.disabled = true;
+  try {
+    statusEl.textContent = 'Chargement M5 + M15…';
+    let allTrades = [];
+    for (const tf of SYN_TFS) {
+      const candles = await synFetchCandles(symbol, count, tf.granularity);
+      const raw = synScan(candles, tf.label);
+      const sims = raw.map(s => synSimulate(candles, s)).filter(s => s.closeTime);
+      allTrades = allTrades.concat(sims);
+    }
+    allTrades.sort((a,b) => a.time - b.time);
+    const kept = []; let lastClose = 0;
+    for (const t of allTrades) { if (t.time >= lastClose) { kept.push(t); lastClose = t.closeTime || t.time; } }
+    const monthly = aggregateMonthly(kept);
+    synBacktestData[instKey] = { trades: kept, monthly, generatedAt: Date.now() };
+    localStorage.setItem(SYN_LS.bt(instKey), JSON.stringify(synBacktestData[instKey]));
+    statusEl.textContent = `Backtest terminé — ${kept.length} trades (M5+M15, une position à la fois).`;
+    synSelectedMonth[instKey] = null;
+    synRenderBacktest(instKey);
+  } catch (e) { statusEl.textContent = 'Erreur : ' + e.message; }
+  finally { btn.disabled = false; }
+}
+function synRenderBacktest(instKey) {
+  const wrap = document.getElementById('syn_'+instKey+'_btWrap');
+  const data = synBacktestData[instKey];
+  if (!data || !Object.keys(data.monthly).length) { wrap.innerHTML = '<div class="empty">Aucune donnée.</div>'; return; }
+  const months = Object.keys(data.monthly).sort();
+  if (!synSelectedMonth[instKey] || !months.includes(synSelectedMonth[instKey])) synSelectedMonth[instKey] = months[months.length-1];
+  const tabs = months.map(m => `<button class="month-tab ${m===synSelectedMonth[instKey]?'active':''}" data-month="${m}">${monthLabel(m)}</button>`).join('');
+  const s = data.monthly[synSelectedMonth[instKey]];
+  wrap.innerHTML = `
+    <div class="month-tabs">${tabs}</div>
+    <div class="stats-grid" style="margin-top:12px">
+      <div class="stat"><div class="num">${s.trades}</div><div class="lbl">Trades</div></div>
+      <div class="stat"><div class="num" style="color:var(--bull)">${s.tp}</div><div class="lbl">TP1+TP2</div></div>
+      <div class="stat"><div class="num" style="color:var(--bear)">${s.sl}</div><div class="lbl">SL</div></div>
+      <div class="stat"><div class="num" style="color:var(--warn)">${s.be}</div><div class="lbl">TP1+BE</div></div>
+      <div class="stat"><div class="num">${s.winrate}%</div><div class="lbl">Winrate</div></div>
+      <div class="stat"><div class="num" style="color:${s.totalRR>=0?'var(--bull)':'var(--bear)'}">${s.totalRR>0?'+':''}${s.totalRR}R</div><div class="lbl">RR Total</div></div>
+    </div>`;
+  wrap.querySelectorAll('.month-tab').forEach(btn => {
+    btn.addEventListener('click', () => { synSelectedMonth[instKey] = btn.dataset.month; synRenderBacktest(instKey); });
+  });
+}
+function synLoadChart(instKey) {
+  if (synTVLoaded[instKey]) return;
+  synTVLoaded[instKey] = true;
+  new TradingView.widget({
+    container_id: 'syn_'+instKey+'_chart', autosize: true,
+    symbol: SYN_INSTRUMENTS[instKey].tv, interval: '15', timezone: 'Europe/Paris',
+    theme: 'dark', style: '1', locale: 'fr', toolbar_bg: '#0d1321',
+    backgroundColor: '#0d1321', gridColor: '#1e2a3f', width: '100%', height: 420
+  });
+}
+function synStartLive() {
+  synRescanLive('vol100'); synRescanLive('vol75');
+  if (!synLiveStarted) { synLiveStarted = true; setInterval(() => { synRescanLive('vol100'); synRescanLive('vol75'); }, 60000); }
+}
+
+document.getElementById('tabPanelGold').onclick = () => {
+  document.getElementById('tabPanelGold').classList.add('active');
+  document.getElementById('tabPanelSynth').classList.remove('active');
+  document.getElementById('panelGold').style.display = 'block';
+  document.getElementById('panelSynth').style.display = 'none';
+};
+document.getElementById('tabPanelSynth').onclick = () => {
+  document.getElementById('tabPanelSynth').classList.add('active');
+  document.getElementById('tabPanelGold').classList.remove('active');
+  document.getElementById('panelGold').style.display = 'none';
+  document.getElementById('panelSynth').style.display = 'block';
+  synLoadChart('vol100'); synLoadChart('vol75');
+  synStartLive();
+};
+document.getElementById('tabVol100').onclick = () => {
+  document.getElementById('tabVol100').classList.add('active');
+  document.getElementById('tabVol75').classList.remove('active');
+  document.getElementById('synPanel_vol100').style.display = 'block';
+  document.getElementById('synPanel_vol75').style.display = 'none';
+};
+document.getElementById('tabVol75').onclick = () => {
+  document.getElementById('tabVol75').classList.add('active');
+  document.getElementById('tabVol100').classList.remove('active');
+  document.getElementById('synPanel_vol75').style.display = 'block';
+  document.getElementById('synPanel_vol100').style.display = 'none';
+};
+document.getElementById('syn_vol100_runBt').onclick = () => synRunBacktest('vol100');
+document.getElementById('syn_vol75_runBt').onclick = () => synRunBacktest('vol75');
+
+synRenderHistory('vol100'); synRenderHistory('vol75');
+synRenderBacktest('vol100'); synRenderBacktest('vol75');
 
 initAuthUI();
 gateAuth();
-refreshTicker();
-setInterval(rescanLive, CONFIG.rescanMs); // scan toutes les 10 min
-
-// ===================== SYNTHETIC — VERSION RAPIDE =====================
-/* (tout le script Synthétique corrigé ici) */
-
-document.getElementById('tabPanelGold').onclick = () => { /* même */ };
-document.getElementById('tabPanelSynth').onclick = () => {
-  document.getElementById('panelSynth').style.display = 'block';
-  document.getElementById('panelGold').style.display = 'none';
-  synLoadChart('vol100');
-  synLoadChart('vol75');
-  if (!window.synLiveStarted) {
-    window.synLiveStarted = true;
-    setInterval(() => { synRescanLive('vol100'); synRescanLive('vol75'); }, 60000);
-  }
-};
+renderCredits();
+updateMarketStatus();
+renderHistory();
+renderEntryLog();
+renderBacktest();
 </script>
 
-<!-- (le reste du HTML : adminDrawer, footer, etc. est IDENTIQUE à l’original) -->
+<div id="adminBackdrop" onclick="closeAdminDrawer()"></div>
+<div id="adminDrawer">
+  <div class="admin-drawer-head">
+    <h3>Panel Admin — Membres</h3>
+    <button class="btn sm" type="button" onclick="closeAdminDrawer()">Fermer</button>
+  </div>
+  <div class="card-title" style="margin-bottom:8px">Paramètres d'accès</div>
+  <div class="field" style="margin-bottom:8px">
+    <label>Clé TwelveData (test local uniquement)</label>
+    <input id="adminTwelveDataKey" type="password" placeholder="Collez votre clé TwelveData" style="width:100%;min-width:0">
+  </div>
+  <div class="field" style="margin-bottom:8px"><label>Prix (Ar)</label><input id="adminFee" type="number" value="30000" style="width:100%;min-width:0"></div>
+  <div class="field" style="margin-bottom:8px"><label>N° paiement</label><input id="adminPhone" placeholder="034 xx xxx xx" style="width:100%;min-width:0"></div>
+  <div class="field" style="margin-bottom:8px"><label>Note paiement</label><input id="adminPayNote" placeholder="MVola / Orange Money" style="width:100%;min-width:0"></div>
+  <div class="field" style="margin-bottom:10px"><label>Lien Telegram (validation)</label><input id="adminTelegram" placeholder="https://t.me/votre_compte" style="width:100%;min-width:0"></div>
+  <button class="btn primary" id="btnSaveSettings" style="width:100%;margin-bottom:16px">Enregistrer paramètres</button>
+  <div class="stats-grid" style="margin-bottom:14px">
+    <div class="stat"><div class="num" id="statMembers">0</div><div class="lbl">Membres</div></div>
+    <div class="stat"><div class="num" id="statPending">0</div><div class="lbl">En attente</div></div>
+    <div class="stat"><div class="num" id="statViews">0</div><div class="lbl">Vues</div></div>
+  </div>
+  <div class="card-title">Tableau membres</div>
+  <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Nom</th><th>Contact</th><th>Statut</th><th>Vues</th><th>Actions</th></tr></thead>
+      <tbody id="membersBody"><tr><td colspan="5" class="empty">Aucun membre</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
 </body>
 </html>
